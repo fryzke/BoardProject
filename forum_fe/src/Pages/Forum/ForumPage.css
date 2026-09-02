@@ -1,0 +1,313 @@
+.Forum {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    padding: 48px 24px;
+    box-sizing: border-box;
+    background-color: #fdfdfd;
+    color: #333;
+}
+
+.ForumContainer {
+    width: 100%;
+    max-width: 1000px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* 게시판 헤더 */
+.ForumHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+}
+
+.ForumTitleSection {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.ForumTitle {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111;
+    margin: 0;
+    letter-spacing: -0.5px;
+    cursor: pointer;
+}
+
+.TotalCount {
+    font-size: 14px;
+    color: #777;
+}
+
+.TotalCount strong {
+    color: #222;
+}
+
+/* 네비게이션 / 액션 버튼 */
+.NavActions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.UserWelcome {
+    font-size: 14px;
+    color: #495057;
+    margin-right: 4px;
+}
+
+.UserWelcome strong {
+    color: #1c7ed6;
+}
+
+.ActionButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.WriteButton {
+    background-color: #2b3a4a;
+    color: #fff;
+    border: 1px solid #2b3a4a;
+}
+
+.WriteButton:hover {
+    background-color: #1e2935;
+    border-color: #1e2935;
+}
+
+.LoginButton {
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #ccc;
+}
+
+.LoginButton:hover {
+    background-color: #f1f3f5;
+    border-color: #aaa;
+}
+
+.LogoutButton {
+    background-color: #f8f9fa;
+    color: #666;
+    border: 1px solid #ddd;
+}
+
+.LogoutButton:hover {
+    background-color: #e9ecef;
+    color: #333;
+}
+
+
+.ForumFilterBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+.ForumCategory {
+    width: 130px;
+    height: 34px;
+    padding: 0 12px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    background-color: #fff;
+    cursor: pointer;
+    outline: none;
+}
+
+.ForumCategory:focus {
+    border-color: #2b3a4a;
+}
+
+.ForumSortOptions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #888;
+}
+
+.SortOption {
+    cursor: pointer;
+    color: #777;
+    transition: color 0.15s ease;
+    user-select: none;
+}
+
+.SortOption:hover {
+    color: #222;
+}
+
+.SortOption.active {
+    font-weight: 700;
+    color: #222;
+}
+
+.SortDivider {
+    color: #ddd;
+    font-size: 11px;
+}
+
+/* 전통적인 PC 테이블 래퍼 및 테이블 */
+.TableWrapper {
+    width: 100%;
+    background-color: #fff;
+    border-top: 2px solid #222;
+    border-bottom: 1px solid #ddd;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ForumTable {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    text-align: center;
+}
+
+/* 테이블 헤더 */
+.ForumTable thead th {
+    background-color: #f8f9fa;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 13px 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+.ThNo {
+    width: 70px;
+}
+
+.ThCategory {
+    width: 60px;
+}
+
+.ThTitle {
+    text-align: center;
+}
+
+.ThAuthor {
+    width: 130px;
+}
+
+.ThDate {
+    width: 110px;
+}
+
+.ThViews {
+    width: 80px;
+}
+
+/* 테이블 바디 */
+.ForumTable tbody td {
+    padding: 14px 10px;
+    font-size: 14px;
+    color: #444;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.PostRow {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.PostRow:hover {
+    background-color: #f6f8fa;
+}
+
+.TdNo {
+    color: #888;
+    font-size: 13px;
+}
+
+.TdCategory {
+    font-size: 13px;
+}
+
+.TdTitle {
+    text-align: left;
+    padding-left: 20px !important;
+}
+
+.TitleText {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+    color: #222;
+    font-weight: 500;
+}
+
+.PostRow:hover .TitleText {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.TdAuthor {
+    color: #555;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.TdDate {
+    color: #888;
+    font-size: 13px;
+}
+
+.TdViews {
+    color: #666;
+    font-size: 13px;
+}
+
+.EmptyMessage {
+    padding: 60px 0 !important;
+    color: #888;
+    font-size: 15px;
+}
+
+/* 푸터 및 페이지네이션 */
+.ForumFooter {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 24px;
+    min-height: 44px;
+}
+
+.PaginationWrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.BottomActions {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}

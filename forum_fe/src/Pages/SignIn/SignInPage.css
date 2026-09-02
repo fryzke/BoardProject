@@ -1,0 +1,94 @@
+.SignIn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.SignInWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+.SignInInputWrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+}
+
+.Id, .Password {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.Id input, .Password input {
+    width: 100%;
+    height: 50px;
+    padding: 0 16px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.Validation {
+    display: flex;
+    align-items: flex-start;
+    min-height: 40px;
+    margin-top: 4px;
+}
+
+.Message {
+    color: red;
+    font-size: 13px;
+    text-align: left;
+    margin: 0;
+}
+
+.SignInButton {
+    background-color: black;
+    color: white;
+    width: 100%;
+    height: 56px;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: background-color 0.2s;
+}
+
+.SignInButton:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+}
+
+.SignUpButtonSecondary {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    background-color: #f1f3f5;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s ease;
+}
+
+.SignUpButtonSecondary:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}

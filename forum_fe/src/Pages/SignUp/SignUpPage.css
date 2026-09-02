@@ -1,0 +1,80 @@
+.SignUp {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.SignUpWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+.SignUpInputWrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+}
+
+.Nickname, .Id, .Password {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.InputLabel {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.Nickname input, .Id input, .Password input {
+    width: 100%;
+    height: 50px;
+    padding: 0 16px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.Validation {
+    display: flex;
+    align-items: flex-start;
+    min-height: 40px;
+    margin-top: 4px;
+}
+
+.Message {
+    color: red;
+    font-size: 13px;
+    text-align: left;
+    margin: 0;
+}
+
+.SignUpButton {
+    background-color: black;
+    color: white;
+    width: 100%;
+    height: 56px;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: background-color 0.2s;
+}
+
+.SignUpButton:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+}

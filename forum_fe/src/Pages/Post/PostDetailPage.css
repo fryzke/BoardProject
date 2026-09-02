@@ -1,0 +1,128 @@
+.PostDetailContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.PostDetailHeader {
+    width: 100%;
+    border-bottom: 2px solid #333;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+}
+
+.PostDetailTitle {
+    font-size: 24px;
+    font-weight: bold;
+    color: #111;
+    margin: 0 0 16px 0;
+}
+
+.PostDetailInfo {
+    display: flex;
+    gap: 16px;
+    font-size: 14px;
+    color: #666;
+}
+
+.PostDetailContent {
+    width: 100%;
+    min-height: 300px;
+    font-size: 16px;
+    line-height: 1.7;
+    color: #333;
+    padding-bottom: 40px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 24px;
+}
+
+.PostDetailContent p {
+    margin: 0 0 12px 0;
+    min-height: 1.5em;
+}
+
+.PostDetailContent p:empty::before {
+    content: '\00a0';
+}
+
+.PostDetailContent h1 {
+    font-size: 2em;
+    font-weight: 700;
+    margin: 18px 0 10px;
+}
+
+.PostDetailContent h2 {
+    font-size: 1.5em;
+    font-weight: 700;
+    margin: 16px 0 8px;
+}
+
+.PostDetailContent h3 {
+    font-size: 1.25em;
+    font-weight: 600;
+    margin: 14px 0 6px;
+}
+
+.PostDetailContent ul,
+.PostDetailContent ol {
+    padding-left: 24px;
+    margin: 0 0 12px 0;
+}
+
+.PostDetailContent img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 12px 0;
+}
+
+.PostDetailActions {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.AuthActions {
+    display: flex;
+    gap: 12px;
+}
+
+.ActionBtn {
+    height: 40px;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    background-color: white;
+    color: #333;
+    transition: all 0.2s;
+}
+
+.ActionBtn:hover {
+    background-color: #f0f0f0;
+}
+
+.EditBtn {
+    background-color: #333;
+    color: white;
+    border: none;
+}
+.EditBtn:hover {
+    background-color: #111;
+}
+
+.DeleteBtn {
+    background-color: #ff4d4f;
+    color: white;
+    border: none;
+}
+.DeleteBtn:hover {
+    background-color: #d9363e;
+}

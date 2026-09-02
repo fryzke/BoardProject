@@ -1,0 +1,35 @@
+.Pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 32px;
+}
+
+.PageButton {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #333;
+    transition: all 0.2s;
+}
+
+.PageButton:hover:not(:disabled) {
+    background-color: #f0f0f0;
+}
+
+.PageButton.Active {
+    background-color: black;
+    color: white;
+    border-color: black;
+    font-weight: bold;
+}
+
+.PageButton:disabled {
+    background-color: #f9f9f9;
+    color: #bbb;
+    cursor: not-allowed;
+}

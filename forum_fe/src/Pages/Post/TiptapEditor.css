@@ -1,0 +1,78 @@
+.tiptap-container {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.menu-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  background-color: #f9f9f9;
+}
+
+.menu-bar button {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.menu-bar button.is-active {
+  background-color: #2b3a4a;
+  color: white;
+  border-color: #2b3a4a;
+}
+
+.tiptap-content .ProseMirror {
+  padding: 16px;
+  min-height: 250px;
+  outline: none;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #333;
+}
+
+.tiptap-content .ProseMirror p {
+  margin: 0 0 12px 0;
+  min-height: 1.5em;
+}
+
+.tiptap-content .ProseMirror p:empty::before {
+  content: '\00a0';
+  pointer-events: none;
+}
+
+/* Heading 크기 및 간격 스타일 */
+.tiptap-content .ProseMirror h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 18px 0 10px;
+}
+.tiptap-content .ProseMirror h2 {
+  font-size: 1.5em;
+  font-weight: 700;
+  margin: 16px 0 8px;
+}
+.tiptap-content .ProseMirror h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 14px 0 6px;
+}
+
+.tiptap-content .ProseMirror ul,
+.tiptap-content .ProseMirror ol {
+  padding-left: 24px;
+  margin: 0 0 12px 0;
+}
+
+.tiptap-content .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 12px 0;
+}
