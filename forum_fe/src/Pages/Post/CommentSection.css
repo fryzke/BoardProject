@@ -24,6 +24,12 @@
     margin: 0;
 }
 
+.comment-count {
+    font-size: 15px;
+    font-weight: normal;
+    color: #888;
+}
+
 /* ==========================================
    2. 댓글 작성/수정 폼 (CommentForm)
    ========================================== */
@@ -128,6 +134,20 @@
     display: flex;
     flex-direction: column;
     margin-bottom: 24px;
+}
+
+.comment-empty {
+    padding: 32px 0;
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+}
+
+.comment-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 16px 0 24px 0;
 }
 
 .comment-item {

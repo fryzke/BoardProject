@@ -237,6 +237,37 @@
     background-color: #f6f8fa;
 }
 
+.PinnedRow {
+    background-color: #f4f8ff;
+    font-weight: 500;
+}
+
+.PinnedRow:hover {
+    background-color: #e8f0fe;
+}
+
+.PinnedIconBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1971c2;
+    background-color: #e7f5ff;
+    border: 1px solid #a5d8ff;
+    border-radius: 12px;
+}
+
+.PinnedTitleTag {
+    display: inline-block;
+    color: #e03131;
+    font-weight: 700;
+    font-size: 13px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
 .TdNo {
     color: #888;
     font-size: 13px;

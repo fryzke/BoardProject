@@ -10,7 +10,7 @@ import java.io.File;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${file.upload-dir:uploads/images}")
+    @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
     @Override
@@ -18,6 +18,8 @@ public class WebConfig implements WebMvcConfigurer {
         File uploadFolder = new File(uploadDir);
         String absolutePath = uploadFolder.getAbsolutePath();
 
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + absolutePath + "/");
         registry.addResourceHandler("/uploads/images/**")
                 .addResourceLocations("file:" + absolutePath + "/");
     }

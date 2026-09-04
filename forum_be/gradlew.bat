@@ -17,7 +17,7 @@
 @rem
 
 @if "%DEBUG%"=="" @echo off
-set GRADLE_USER_HOME=C:\board_proj\.gradle_home
+
 @rem ##########################################################################
 @rem
 @rem  Gradle startup script for Windows
@@ -28,8 +28,8 @@ set GRADLE_USER_HOME=C:\board_proj\.gradle_home
 setlocal EnableExtensions
 
 set DIRNAME=%~dp0
-set GRADLE_USER_HOME=C:\board_proj\.gradle_home
-set JAVA_HOME=C:\Program Files\Java\jdk-21.0.12.1
+
+
 if "%DIRNAME%"=="" set DIRNAME=.
 @rem This is normally unused
 set APP_BASE_NAME=%~n0
@@ -57,7 +57,7 @@ echo location of your Java installation. 1>&2
 "%COMSPEC%" /c exit 1
 
 :findJavaFromJavaHome
-set GRADLE_USER_HOME=C:\board_proj\.gradle_home
+
 set JAVA_HOME=%JAVA_HOME:"=%
 set JAVA_EXE=%JAVA_HOME%/bin/java.exe
 

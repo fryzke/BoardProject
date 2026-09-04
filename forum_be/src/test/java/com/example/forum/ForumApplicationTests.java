@@ -29,7 +29,13 @@ class ForumApplicationTests {
 		// 1. 테스트용 사용자 및 게시글 준비
 		String userId = "cacheTestUser";
 		if (userRepository.findByUserId(userId).isEmpty()) {
-			User user = new User(userId, "password123", "Cache Tester", com.example.forum.domain.Role.USER, com.example.forum.domain.Grade.BRONZE);
+			User user = User.builder()
+					.userId(userId)
+					.userPassword("password123")
+					.userName("Cache Tester")
+					.role(com.example.forum.domain.Role.USER)
+					.grade(com.example.forum.domain.Grade.BRONZE)
+					.build();
 			userRepository.save(user);
 		}
 

@@ -33,26 +33,29 @@ public class DataInitializer implements CommandLineRunner {
         User admin;
 
         if (userRepository.count() == 0) {
-            user1 = new User(
-                    "testuser1",
-                    passwordEncoder.encode("Test123!"),
-                    "테스트유저1",
-                    Role.USER,
-                    Grade.BRONZE);
+            user1 = User.builder()
+                    .userId("testuser1")
+                    .userPassword(passwordEncoder.encode("Test123!"))
+                    .userName("테스트유저1")
+                    .role(Role.USER)
+                    .grade(Grade.BRONZE)
+                    .build();
 
-            user2 = new User(
-                    "testuser2",
-                    passwordEncoder.encode("Test123!"),
-                    "테스트유저2",
-                    Role.USER,
-                    Grade.BRONZE);
+            user2 = User.builder()
+                    .userId("testuser2")
+                    .userPassword(passwordEncoder.encode("Test123!"))
+                    .userName("테스트유저2")
+                    .role(Role.USER)
+                    .grade(Grade.BRONZE)
+                    .build();
 
-            admin = new User(
-                    "admin001",
-                    passwordEncoder.encode("Admin123!"),
-                    "관리자",
-                    Role.ADMIN,
-                    Grade.BRONZE);
+            admin = User.builder()
+                    .userId("admin001")
+                    .userPassword(passwordEncoder.encode("Admin123!"))
+                    .userName("관리자")
+                    .role(Role.ADMIN)
+                    .grade(Grade.BRONZE)
+                    .build();
 
             userRepository.save(user1);
             userRepository.save(user2);
@@ -65,28 +68,52 @@ public class DataInitializer implements CommandLineRunner {
             admin = userRepository.findByUserId("admin001").orElse(null);
         }
 
-        // 2. 게시글 목데이터 생성 (기존 게시글 삭제 후 55개 생성하여 페이지네이션 및 카테고리 테스트 가능)
-        if (user1 != null) {
-            postRepository.deleteAll();
-
+        // 2. 게시글 목데이터 생성
+        if (user1 != null && postRepository.count() == 0) {
             List<Post> mockPosts = new ArrayList<>();
             User[] authors = { user1, user2 != null ? user2 : user1, admin != null ? admin : user1 };
             Category[] categories = Category.values();
 
             for (int i = 1; i <= 55; i++) {
-                User author = authors[i % authors.length];
-                Category category = categories[i % categories.length];
-                String title = String.format("[%s] 테스트 게시글 %d번째 - %s", category.getName(), i,
+                boolean isPinned = (i <= 3);
+                User author = (isPinned && admin != null) ? admin : authors[i % authors.length];
+                Category category = isPinned ? Category.NOTICE : categories[i % categories.length];
+                String title = String.format("[%s] %s테스트 게시글 %d번째 - %s", 
+                        category.getName(), 
+                        (isPinned ? "[고정] " : ""), 
+                        i,
                         (i % 5 == 0 ? "Spring Boot 4.1 & React 게시판 프로젝트" : "JPA & Redis CRUD 테스트"));
                 String content = String.format(
-                        "<p>안녕하세요! 이것은 <strong>%s</strong> 카테고리의 %d번째 테스트 게시글 본문입니다.</p><p>작성자: %s</p><p>페이지네이션 및 카테고리 테스트를 위해 자동 생성된 데이터입니다.</p>",
-                        category.getName(), i, author.getUserName());
-                
-                mockPosts.add(new Post(title, category, content, author, false));
+                        "<p>안녕하세요! 이것은 <strong>%s</strong> 카테고리의 %d번째 테스트 게시글 본문입니다.%s</p><p>작성자: %s</p><p>페이지네이션 및 카테고리 테스트를 위해 자동 생성된 데이터입니다.</p>",
+                        category.getName(), i, (isPinned ? " (상단 고정된 게시글)" : ""), author.getUserName());
+                mockPosts.add(Post.builder()
+                        .title(title)
+                        .category(category)
+                        .content(content)
+                        .author(author)
+                        .isPinned(isPinned)
+                        .build());
             }
 
             postRepository.saveAll(mockPosts);
-            log.info("=== Mock Posts Initialized: Existing posts deleted and 55 new posts created with categories ===");
+            log.info("=== Mock Posts Initialized: 55 new posts created (3 pinned) ===");
+        } else if (postRepository.count() > 0 && postRepository.countByIsPinnedTrue() == 0) {
+            // 이미 게시글이 존재하는 경우 첫 3개 게시글을 고정 게시글로 설정
+            List<Post> existingPosts = postRepository.findAll();
+            int pinCount = 0;
+            for (Post p : existingPosts) {
+                if (pinCount < 3) {
+                    p.setPinned(true);
+                    if (admin != null) {
+                        p.setAuthor(admin);
+                    }
+                    pinCount++;
+                } else {
+                    break;
+                }
+            }
+            postRepository.saveAll(existingPosts.subList(0, pinCount));
+            log.info("=== Existing Posts Updated: 3 posts set to pinned ===");
         }
     }
 }

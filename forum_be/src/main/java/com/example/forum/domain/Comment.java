@@ -50,4 +50,15 @@ public class Comment extends BaseEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    public void update(String content) {
+        if (content != null) {
+            this.content = content;
+        }
+    }
+
+    public void delete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
 }

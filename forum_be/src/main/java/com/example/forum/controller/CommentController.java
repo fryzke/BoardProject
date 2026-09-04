@@ -57,7 +57,16 @@ public class CommentController {
             @RequestParam(defaultValue = "10") int limit, @PathVariable Long postId) {
         try {
             Page<CommentResponseDto> response = commentService.getCommentsByPost(page, limit, postId);
-            return ResponseEntity.ok(Map.of("success", true, "data", response, "message", "댓글을 성공적으로 조회하였습니다."));
+            Map<String, Object> result = Map.of(
+                    "success", true,
+                    "data", response.getContent(),
+                    "pagination", Map.of(
+                            "currentPage", response.getNumber() + 1,
+                            "totalPages", response.getTotalPages(),
+                            "totalComments", response.getTotalElements()
+                    ),
+                    "message", "댓글을 성공적으로 조회하였습니다.");
+            return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }

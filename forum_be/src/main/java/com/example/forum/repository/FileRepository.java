@@ -8,17 +8,17 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.example.forum.domain.Image;
+import com.example.forum.domain.File;
 import com.example.forum.domain.User;
 
-public interface ImageRepository extends JpaRepository<Image, Long> {
+public interface FileRepository extends JpaRepository<File, Long> {
     @EntityGraph(attributePaths = { "author" })
-    List<Image> findAllByPostId(Long postId);
+    List<File> findAllByPostId(Long postId);
 
     @EntityGraph(attributePaths = { "author" })
-    List<Image> findAllByAuthorAndPostIsNull(User author);
+    List<File> findAllByAuthorAndPostIsNull(User author);
 
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE Image i SET i.isDeleted = true, i.deletedAt = CURRENT_TIMESTAMP WHERE i.post.id = :postId")
+    @Query("UPDATE File f SET f.isDeleted = true, f.deletedAt = CURRENT_TIMESTAMP WHERE f.post.id = :postId")
     void updateByPostId(@Param("postId") Long postId);
 }

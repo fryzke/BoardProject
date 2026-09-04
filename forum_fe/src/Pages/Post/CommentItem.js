@@ -45,9 +45,12 @@ function CommentItem({ postId, isLoggedIn, currentUserId, comment, isReply = fal
 
                     {!comment.isDeleted
                         && <div className="comment-actions">
-                            <button className="comment-action-btn" onClick={() => setIsAddComment(!isAddComment)}>
-                                {isAddComment ? "답글 취소" : "답글"}
-                            </button>
+                            {isLoggedIn
+                                &&
+                                <button className="comment-action-btn" onClick={() => setIsAddComment(!isAddComment)}>
+                                    {isAddComment ? "답글 취소" : "답글"}
+                                </button>
+                            }
                             {isAuthor && (
                                 <>
                                     <button className="comment-action-btn" onClick={() => setIsEditMode(true)}>수정</button>

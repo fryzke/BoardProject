@@ -39,11 +39,4 @@ public class User extends BaseEntity{
     @Column(nullable = false)
     private Grade grade;
     
-    public User(String userId, String userPassword, String userName, Role role, Grade grade) {
-        this.userId = userId;
-        this.userPassword = userPassword;
-        this.userName = userName;
-        this.role = role;
-        this.grade = grade;
-    }
 }

@@ -14,6 +14,7 @@ function PostEditPage() {
     const [title, setTitle] = useState("");
     const [selectedCategory, setSelectedCategory] = useState(Category.TALK);
     const [content, setContent] = useState("");
+    const [isPinned, setIsPinned] = useState(false);
     const [loading, setLoading] = useState(isEditMode);
     const userId = localStorage.getItem("userId");
     const userRole = localStorage.getItem("userRole");
@@ -32,6 +33,8 @@ function PostEditPage() {
                     }
                     setTitle(data.title);
                     setContent(data.content);
+                    if (data.category) setSelectedCategory(data.category);
+                    setIsPinned(Boolean(data.isPinned ?? data.pinned));
                 } catch (error) {
                     if (!axios.isCancel(error)) {
                         alert("게시글을 불러올 수 없습니다.");
@@ -71,18 +74,21 @@ function PostEditPage() {
             return;
         }
 
+        const finalPinned = (userRole === Role.ADMIN) ? isPinned : false;
+
         try {
             if (isEditMode) {
-                await updatePost(id, title, selectedCategory, content);
+                await updatePost(id, title, selectedCategory, content, finalPinned);
                 alert("게시글이 수정되었습니다.");
                 navigate(`/post/${id}`);
             } else {
-                await createPost(title, selectedCategory, content);
+                await createPost(title, selectedCategory, content, finalPinned);
                 alert("게시글이 등록되었습니다.");
                 navigate("/");
             }
         } catch (error) {
-            alert("처리 중 오류가 발생했습니다.");
+            const msg = error.response?.data?.message || "처리 중 오류가 발생했습니다.";
+            alert(msg);
         }
     };
 
@@ -95,18 +101,32 @@ function PostEditPage() {
             <h1 className="PostEditHeader">{isEditMode ? "게시글 수정" : "새 게시글 작성"}</h1>
 
             <div className="PostEditForm">
-                <select
-                    className="PostCategory"
-                    id="category"
-                    onChange={() => setSelectedCategory(document.getElementById("category").value)}>
-                    {
-                        Object.values(Category)
-                            .filter(category => (category !== Category.NOTICE || userRole === Role.ADMIN) && category !== Category.ALL)
-                            .map((category) => (
-                                <option value={category}>{category}</option>
-                            ))
-                    }
-                </select>
+                <div className="PostEditMetaRow">
+                    <select
+                        className="PostCategory"
+                        id="category"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}>
+                        {
+                            Object.values(Category)
+                                .filter(category => (category !== Category.NOTICE || userRole === Role.ADMIN) && category !== Category.ALL)
+                                .map((category) => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))
+                        }
+                    </select>
+
+                    {userRole === Role.ADMIN && (
+                        <label className="PinnedCheckboxLabel">
+                            <input
+                                type="checkbox"
+                                checked={isPinned}
+                                onChange={(e) => setIsPinned(e.target.checked)}
+                            />
+                            <span>📌 상단 고정 (최대 5개)</span>
+                        </label>
+                    )}
+                </div>
 
                 <input
                     className="PostEditTitleInput"

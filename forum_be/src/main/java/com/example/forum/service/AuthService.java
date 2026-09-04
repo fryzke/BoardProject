@@ -30,8 +30,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-
-    private static final String PASSWORD_PATTERN = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[+=%_!@#$^&*?]).{8,}$";
+    private final com.example.forum.validator.AuthValidator authValidator;
 
     /**
      * 회원가입 처리
@@ -41,28 +40,15 @@ public class AuthService {
      * - Role.USER 기본 할당
      */
     public void signUp(SignUpDto dto) {
-        if (userRepository.existsByUserId(dto.getUserId())) {
-            throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
-        }
+        authValidator.validateSignUp(dto, userRepository.existsByUserId(dto.getUserId()));
 
-        if (dto.getUserId().trim().length() < 4 || dto.getUserId().trim().length() > 16) {
-            throw new IllegalArgumentException("아이디는 4자 이상 16자 이하로 입력해주세요.");
-        }
-
-        if (!dto.getUserPassword().matches(PASSWORD_PATTERN)) {
-            throw new IllegalArgumentException("비밀번호는 영문, 숫자, 특수문자(+=%_!@#$^&*?)를 포함하여 8자 이상이어야 합니다.");
-        }
-
-        if (dto.getUserName().trim().isEmpty()) {
-            throw new IllegalArgumentException("닉네임을 입력해주세요.");
-        }
-
-        User user = new User(
-                dto.getUserId(),
-                passwordEncoder.encode(dto.getUserPassword()),
-                dto.getUserName(),
-                Role.USER,
-                Grade.BRONZE);
+        User user = User.builder()
+                .userId(dto.getUserId().trim())
+                .userPassword(passwordEncoder.encode(dto.getUserPassword()))
+                .userName(dto.getUserName().trim())
+                .role(Role.USER)
+                .grade(Grade.BRONZE)
+                .build();
 
         userRepository.save(user);
     }

@@ -62,7 +62,12 @@ function PostDetailPage() {
     return (
         <div className="PostDetailContainer">
             <div className="PostDetailHeader">
-                <h1 className="PostDetailTitle">{post.title}</h1>
+                <h1 className="PostDetailTitle">
+                    {Boolean(post.isPinned ?? post.pinned) && (
+                        <span className="DetailPinnedBadge">📌 고정글</span>
+                    )}
+                    {post.title}
+                </h1>
                 <div className="PostDetailInfo">
                     <span className="Author">작성자: {post.author || '-'}</span>
                     <span className="Date">작성일: {formatDate(post.createdAt || post.date)}</span>

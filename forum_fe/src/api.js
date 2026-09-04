@@ -130,9 +130,9 @@ export const getPost = async (id, options = {}) => {
     }
 };
 
-export const createPost = async (title, category, content) => {
+export const createPost = async (title, category, content, isPinned = false) => {
     try {
-        const response = await api.post('/posts', { title, category, content });
+        const response = await api.post('/posts', { title, category, content, isPinned });
         return response.data;
     } catch (error) {
         console.error("Create post error:", error);
@@ -140,9 +140,9 @@ export const createPost = async (title, category, content) => {
     }
 };
 
-export const updatePost = async (id, title, category, content) => {
+export const updatePost = async (id, title, category, content, isPinned = false) => {
     try {
-        const response = await api.put(`/posts/${id}`, { title, category, content });
+        const response = await api.put(`/posts/${id}`, { title, category, content, isPinned });
         return response.data;
     } catch (error) {
         console.error("Update post error:", error);
@@ -218,16 +218,13 @@ export const deleteImage = async (imageId) => {
 
 // ===== Comment APIs (백엔드 실제 연동) =====
 
-export const getComments = async (id) => {
+export const getComments = async (postId, page = 1, limit = 10, options = {}) => {
     try {
-        const response = await api.get(`/comments/${id}`);
-        if (response.data && Array.isArray(response.data.data)) {
-            return response.data.data;
-        }
-        if (Array.isArray(response.data)) {
-            return response.data;
-        }
-        return [];
+        const response = await api.get(`/comments/${postId}?page=${page}&limit=${limit}`, options);
+        return {
+            data: response?.data.data ?? [],
+            pagination: response?.data.pagination ?? null
+        };
     } catch (error) {
         if (axios.isCancel(error)) {
             throw error;

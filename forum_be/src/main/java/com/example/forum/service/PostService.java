@@ -1,16 +1,17 @@
 package com.example.forum.service;
 
 import com.example.forum.domain.Category;
-import com.example.forum.domain.Image;
+import com.example.forum.domain.File;
 import com.example.forum.domain.Post;
-import com.example.forum.domain.Role;
 import com.example.forum.domain.User;
 import com.example.forum.dto.PostDto;
 import com.example.forum.dto.PostResponseDto;
 import com.example.forum.dto.RestPage;
-import com.example.forum.repository.ImageRepository;
+import com.example.forum.event.FileDeleteEvent;
+import com.example.forum.repository.FileRepository;
 import com.example.forum.repository.PostRepository;
 import com.example.forum.repository.UserRepository;
+import com.example.forum.validator.PostValidator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,6 +21,7 @@ import java.util.Set;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,10 +37,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final ImageRepository imageRepository;
+    private final FileRepository fileRepository;
     private final RedisViewCountService redisViewCountService;
-
+    private final PostValidator postValidator;
     private final StringRedisTemplate stringRedisTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     private void clearPostsCache() {
         Set<String> keys = stringRedisTemplate.keys("postsCache::*");
@@ -49,34 +52,26 @@ public class PostService {
 
     // 게시글 생성 (생성 시 목록 캐시 전체 무효화)
     public Post createPost(PostDto dto, String userId) {
-        if (dto.getTitle() == null || dto.getTitle().trim().length() < 2 || dto.getTitle().trim().length() > 100) {
-            throw new IllegalArgumentException("제목은 2자 이상 100자 이하로 입력해주세요.");
-        }
-        // 본문 검증 (1자 ~ 20,000자)
-        if (dto.getContent() == null || dto.getContent().trim().isEmpty() || dto.getContent().length() > 20000) {
-            throw new IllegalArgumentException("본문은 1자 이상 20,000자 이하로 입력해주세요.");
-        }
-
         User author = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
 
-        if (author.getRole() != Role.ADMIN && dto.getCategory() == Category.NOTICE) {
-            throw new IllegalArgumentException("공지사항은 관리자만 작성할 수 있습니다.");
-        }
+        long currentPinnedCount = postRepository.countByIsPinnedTrue();
+        postValidator.validateCreate(dto, author, currentPinnedCount);
 
-        Post post = new Post(
-                dto.getTitle(),
-                dto.getCategory(),
-                dto.getContent(),
-                author,
-                dto.isPinned());
+        Post post = Post.builder()
+                .title(dto.getTitle().trim())
+                .category(dto.getCategory())
+                .content(dto.getContent().trim())
+                .author(author)
+                .isPinned(dto.isPinned())
+                .build();
 
         postRepository.save(post);
 
-        List<Image> unlinkedImages = imageRepository.findAllByAuthorAndPostIsNull(author);
-        for (Image image : unlinkedImages) {
-            if (dto.getContent().contains(image.getAccessUrl())) {
-                image.setPost(post);
+        List<File> unlinkedFiles = fileRepository.findAllByAuthorAndPostIsNull(author);
+        for (File file : unlinkedFiles) {
+            if (dto.getContent().contains(file.getAccessUrl())) {
+                file.setPost(post);
             }
         }
 
@@ -141,23 +136,25 @@ public class PostService {
         return new RestPage<>(content, pageable, postPage.getTotalElements());
     }
 
-    // 게시글 삭제 (해당 게시글 캐시 및 목록 캐시 전체 무효화)
+    // 게시글 삭제 (해당 게시글 캐시 및 목록 캐시 전체 무효화 + 물리 파일 삭제 이벤트 발행)
     @Caching(evict = {
             @CacheEvict(value = "postCache", key = "#id"),
     })
     public void deletePost(Long id, String loginId) {
-        if (loginId == null) {
-            throw new IllegalArgumentException("로그인이 필요합니다.");
-        }
-        Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글입니다."));
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글입니다."));
 
-        if (!post.getAuthor().getUserId().equals(loginId)) {
-            throw new IllegalArgumentException("본인이 작성한 글만 삭제할 수 있습니다.");
-        }
+        postValidator.validateDelete(post, loginId);
 
-        imageRepository.updateByPostId(id);
+        List<File> files = fileRepository.findAllByPostId(id);
+        fileRepository.updateByPostId(id);
         postRepository.delete(post);
         clearPostsCache();
+
+        // 트랜잭션 성공 후 비동기 물리 파일 삭제 이벤트 발행
+        for (File file : files) {
+            eventPublisher.publishEvent(new FileDeleteEvent(file.getStoredName()));
+        }
     }
 
     // 게시글 수정 (해당 게시글 캐시 및 목록 캐시 전체 무효화)
@@ -165,48 +162,28 @@ public class PostService {
             @CacheEvict(value = "postCache", key = "#id"),
     })
     public void editPost(PostDto dto, Long id, String loginId) {
-        if (loginId == null) {
-            throw new IllegalArgumentException("로그인이 필요합니다.");
-        }
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글입니다."));
 
-        if (dto.getTitle() == null || dto.getTitle().trim().isBlank()) {
-            throw new IllegalArgumentException("제목은 비워둘 수 없습니다.");
-        }
+        long currentPinnedCount = postRepository.countByIsPinnedTrue();
+        postValidator.validateEdit(post, dto, loginId, currentPinnedCount);
 
-        if (dto.getCategory() == null) {
-            throw new IllegalArgumentException("카테고리는 비워둘 수 없습니다.");
+        post.update(dto.getTitle().trim(), dto.getCategory(), dto.getContent().trim(), dto.isPinned());
 
-        }
-        if (dto.getContent() == null || dto.getContent().trim().isBlank()) {
-            throw new IllegalArgumentException("본문은 비워둘 수 없습니다.");
-        }
-
-        Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 글입니다."));
-        if (!post.getAuthor().getUserId().equals(loginId)) {
-            throw new IllegalArgumentException("본인이 작성한 글만 수정할 수 있습니다.");
-        }
-
-        if (dto.getCategory() == Category.NOTICE && post.getAuthor().getRole() != Role.ADMIN) {
-            throw new IllegalArgumentException("공지사항은 관리자만 작성 할 수 있습니다.");
-        }
-
-        post.setTitle(dto.getTitle());
-        post.setCategory(dto.getCategory());
-        post.setContent(dto.getContent());
-        post.setPinned(dto.isPinned());
-
-        // 새로 추가된 작성자의 미연결 이미지 연결
-        List<Image> unlinkedImages = imageRepository.findAllByAuthorAndPostIsNull(post.getAuthor());
-        for (Image image : unlinkedImages) {
-            if (dto.getContent().contains(image.getAccessUrl())) {
-                image.setPost(post);
+        // 새로 추가된 작성자의 미연결 파일 연결
+        List<File> unlinkedFiles = fileRepository.findAllByAuthorAndPostIsNull(post.getAuthor());
+        for (File file : unlinkedFiles) {
+            if (dto.getContent().contains(file.getAccessUrl())) {
+                file.setPost(post);
             }
         }
 
-        List<Image> savedImages = imageRepository.findAllByPostId(id);
-        for (Image image : savedImages) {
-            if (!dto.getContent().contains(image.getAccessUrl())) {
-                imageRepository.delete(image);
+        // 본문에서 제거된 기존 파일 Soft Delete 및 물리 파일 삭제 이벤트 발행
+        List<File> savedFiles = fileRepository.findAllByPostId(id);
+        for (File file : savedFiles) {
+            if (!dto.getContent().contains(file.getAccessUrl())) {
+                fileRepository.delete(file);
+                eventPublisher.publishEvent(new FileDeleteEvent(file.getStoredName()));
             }
         }
 

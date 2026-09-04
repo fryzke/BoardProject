@@ -46,7 +46,7 @@ public class Post extends BaseEntity {
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<Image> images = new ArrayList<>();
+    private List<File> files = new ArrayList<>();
     
     @Builder.Default
     @Column(name="is_pinned", nullable = false)
@@ -63,6 +63,21 @@ public class Post extends BaseEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    public void update(String title, Category category, String content, boolean isPinned) {
+        if (title != null) this.title = title;
+        if (category != null) this.category = category;
+        if (content != null) this.content = content;
+        this.isPinned = isPinned;
+    }
+
+    public void changePinned(boolean isPinned) {
+        this.isPinned = isPinned;
+    }
+
+    public void changeAuthor(User author) {
+        this.author = author;
+    }
+
     public void increaseViewCount() {
         this.viewCount++;
     }
@@ -73,11 +88,4 @@ public class Post extends BaseEntity {
         this.deletedAt = LocalDateTime.now();
     }
 
-    public Post(String title, Category category, String content, User author, boolean isPinned) {
-        this.title = title;
-        this.category = category;
-        this.content = content;
-        this.author = author;
-        this.isPinned = isPinned;
-    }
 }

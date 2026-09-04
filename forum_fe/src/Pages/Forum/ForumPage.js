@@ -161,33 +161,43 @@ function ForumPage() {
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan="5" className="EmptyMessage">
+                                    <td colSpan="6" className="EmptyMessage">
                                         게시글을 불러오는 중입니다...
                                     </td>
                                 </tr>
                             ) : posts.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="EmptyMessage">
+                                    <td colSpan="6" className="EmptyMessage">
                                         등록된 게시글이 없습니다.
                                     </td>
                                 </tr>
                             ) : (
-                                posts.map((post, idx) => (
-                                    <tr
-                                        key={post.id}
-                                        className="PostRow"
-                                        onClick={() => navigate(`/post/${post.id}`)}
-                                    >
-                                        <td className="TdNo">{totalPosts - (20 * (currentPage - 1)) - idx}</td>
-                                        <td className="TdCategory">{post.category}</td>
-                                        <td className="TdTitle">
-                                            <span className="TitleText">{post.title}</span>
-                                        </td>
-                                        <td className="TdAuthor">{post.author || '-'}</td>
-                                        <td className="TdDate">{formatDate(post.createdAt || post.date)}</td>
-                                        <td className="TdViews">{post.viewCount ?? 0}</td>
-                                    </tr>
-                                ))
+                                posts.map((post, idx) => {
+                                    const isPinned = Boolean(post.isPinned ?? post.pinned);
+                                    return (
+                                        <tr
+                                            key={post.id}
+                                            className={`PostRow ${isPinned ? 'PinnedRow' : ''}`}
+                                            onClick={() => navigate(`/post/${post.id}`)}
+                                        >
+                                            <td className="TdNo">
+                                                {isPinned ? (
+                                                    <span className="PinnedIconBadge">📌 고정</span>
+                                                ) : (
+                                                    totalPosts - (20 * (currentPage - 1)) - idx
+                                                )}
+                                            </td>
+                                            <td className="TdCategory">{post.category}</td>
+                                            <td className="TdTitle">
+                                                {isPinned && <span className="PinnedTitleTag">[고정]</span>}
+                                                <span className="TitleText">{post.title}</span>
+                                            </td>
+                                            <td className="TdAuthor">{post.author || '-'}</td>
+                                            <td className="TdDate">{formatDate(post.createdAt || post.date)}</td>
+                                            <td className="TdViews">{post.viewCount ?? 0}</td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>

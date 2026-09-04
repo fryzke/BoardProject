@@ -2,6 +2,7 @@ package com.example.forum.dto;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.example.forum.domain.Post;
 
 import lombok.Getter;
@@ -17,7 +18,10 @@ public class PostResponseDto {
     private String category;
     private String content;
     private String author;
+
+    @JsonProperty("isPinned")
     private boolean isPinned;
+
     private LocalDateTime createdAt;
     private int viewCount;
 
