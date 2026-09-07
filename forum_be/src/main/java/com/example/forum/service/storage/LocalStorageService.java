@@ -17,7 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class LocalStorageService implements FileStorageService {
+public class LocalStorageService implements FileStorageServiceImpl {
+    Long MAX_SIZE = 20 * 1024 * 1024L;
 
     @Value("${file.upload-dir:uploads}")
     private String uploadDir;
@@ -30,6 +31,12 @@ public class LocalStorageService implements FileStorageService {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("업로드할 파일이 없습니다.");
         }
+
+        if(file.getSize() > MAX_SIZE){
+            throw new IllegalArgumentException("파일 허용 용량을 초과하였습니다.");
+        }
+
+        //TODO : 확장자 검증 추가
 
         try {
             File folder = new File(uploadDir);

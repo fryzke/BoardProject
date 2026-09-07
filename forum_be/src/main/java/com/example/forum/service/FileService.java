@@ -28,6 +28,9 @@ public class FileService {
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    int MAX_IMAGE = 10;
+    Long MAX_SIZE = 100 * 1024 * 1024L;
+
     // 파일 메타데이터 저장
     public FileResponseDto createFile(FileRequestDto dto, Long postId, String loginUserId) {
         Post post = null;

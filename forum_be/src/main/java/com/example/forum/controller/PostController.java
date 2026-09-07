@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -76,7 +77,9 @@ public class PostController {
                             "totalPosts", data.getTotalElements() // 총 글 개수
                     ),
                     "message", "게시글 목록을 조회하였습니다.");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok()
+                    .cacheControl(CacheControl.noCache().mustRevalidate())
+                    .body(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }
@@ -84,7 +87,7 @@ public class PostController {
 
     /*
      * GET api/posts/{id}
-     * 게시글 단건 조회 (Redis 기반 24시간 중복 방지 및 작성자 본인 제외)
+     * 게시글 단건 조회 (HTTP Header ETag 캐싱 및 24시간 중복 조회수 방지)
      */
     @GetMapping("/{id}")
     public ResponseEntity<?> getPost(@PathVariable Long id,
@@ -94,7 +97,9 @@ public class PostController {
             String clientIp = getClientIp(request);
             postService.increaseViewCount(id, loginId, clientIp);
             PostResponseDto data = postService.getPost(id);
-            return ResponseEntity.ok(Map.of("success", true, "data", data, "message", "게시글을 성공적으로 조회하였습니다."));
+            return ResponseEntity.ok()
+                    .cacheControl(CacheControl.noCache().mustRevalidate())
+                    .body(Map.of("success", true, "data", data, "message", "게시글을 성공적으로 조회하였습니다."));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }

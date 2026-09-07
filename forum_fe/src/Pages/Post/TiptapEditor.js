@@ -3,7 +3,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
 import DOMPurify from 'dompurify';
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import {
     Bold, Italic, Strikethrough, Heading1, Heading2, Heading3,
     List, ListOrdered, ImageIcon, AlignLeft, AlignCenter, AlignRight, AlignJustify
@@ -12,7 +12,11 @@ import { normalizeContentForEditor } from '../../utils';
 import { uploadImage } from '../../api';
 import './TiptapEditor.css';
 
-const MenuBar = ({ editor, onImageUploadClick}) => {
+const MAX_SIZE = 20 * 1024 * 1024;
+const TOTAL_MAX_SIZE = 100 * 1024 * 1024;
+const TOTAL_IMAGE_NUMBER = 10;
+
+const MenuBar = ({ editor, onImageUploadClick }) => {
     if (!editor) {
         return null;
     }
@@ -127,6 +131,8 @@ const MenuBar = ({ editor, onImageUploadClick}) => {
 };
 
 export default function TiptapEditor({ content, onChange, postId }) {
+    const [totalSize, setTotalSize] = useState(0);
+    const [totalImage, setTotalImage] = useState(0);
     const fileInputRef = useRef(null);
 
     const editor = useEditor({
@@ -160,12 +166,34 @@ export default function TiptapEditor({ content, onChange, postId }) {
 
     const handleFileChange = useCallback(async (event) => {
         const file = event.target.files?.[0];
+
         if (!file) return;
+
+        const fileSize = file.size();
+
+        if (totalImage > TOTAL_IMAGE_NUMBER) {
+            alert("파일은 최대 10개까지 업로드 가능합니다.");
+            event.target.value = '';
+            return;
+        }
+
+        if (fileSize > MAX_SIZE) {
+            alert("파일은 최대 20mb까지 업로드 가능합니다.");
+            event.target.value = '';
+        }
+
+
+        if (totalSize > TOTAL_MAX_SIZE) {
+            alert("파일은 총합 100mb까지 업로드할 수 있습니다.");
+            setTotalSize(totalSize - fileSize);
+            return;
+        }
 
         try {
             const result = await uploadImage(file, postId);
             if (result.success && result.url) {
                 editor.chain().focus().setImage({ src: result.url }).run();
+                setTotalSize(totalSize + fileSize);
             } else {
                 alert(result.message || '이미지 업로드에 실패했습니다.');
             }

@@ -18,17 +18,17 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.forum.dto.FileRequestDto;
 import com.example.forum.dto.FileResponseDto;
 import com.example.forum.service.FileService;
-import com.example.forum.service.storage.FileStorageService;
+import com.example.forum.service.storage.FileStorageServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping({ "/api/files", "/api/images" }) // 신규 /api/files 및 기존 프론트엔드 호환용 /api/images 지원
+@RequestMapping({ "/api/files", "/api/images" }) 
 @RequiredArgsConstructor
 public class FileController {
 
     private final FileService fileService;
-    private final FileStorageService fileStorageService;
+    private final FileStorageServiceImpl fileStorageService;
 
     /*
      * POST /api/files/upload 또는 /api/images/upload

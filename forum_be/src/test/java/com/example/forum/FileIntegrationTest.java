@@ -24,7 +24,7 @@ import com.example.forum.repository.FileRepository;
 import com.example.forum.repository.UserRepository;
 import com.example.forum.service.FileService;
 import com.example.forum.service.PostService;
-import com.example.forum.service.storage.FileStorageService;
+import com.example.forum.service.storage.FileStorageServiceImpl;
 
 @SpringBootTest
 class FileIntegrationTest {
@@ -36,7 +36,7 @@ class FileIntegrationTest {
     private FileRepository fileRepository;
 
     @Autowired
-    private FileStorageService fileStorageService;
+    private FileStorageServiceImpl fileStorageService;
 
     @Autowired
     private PostService postService;

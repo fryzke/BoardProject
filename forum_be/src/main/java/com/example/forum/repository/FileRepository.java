@@ -21,4 +21,9 @@ public interface FileRepository extends JpaRepository<File, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE File f SET f.isDeleted = true, f.deletedAt = CURRENT_TIMESTAMP WHERE f.post.id = :postId")
     void updateByPostId(@Param("postId") Long postId);
+
+    int countByPostId(Long postId);
+
+    @Query("SELECT COALESCE(SUM(f.fileSize)) AS totalSize FROM File f WHERE f.postId = :postId")
+    Long sumTotalSizeByPostId(@Param("postId") Long postId);
 }
