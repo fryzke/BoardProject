@@ -10,6 +10,8 @@ import com.example.forum.dto.SignUpDto;
 import com.example.forum.repository.RefreshTokenRepository;
 import com.example.forum.repository.UserRepository;
 import com.example.forum.security.JwtProvider;
+import com.example.forum.validator.AuthValidator;
+
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -30,7 +32,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final com.example.forum.validator.AuthValidator authValidator;
+    private final AuthValidator authValidator;
 
     /**
      * 회원가입 처리

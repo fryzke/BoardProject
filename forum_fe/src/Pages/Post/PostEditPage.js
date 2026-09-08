@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Role, Category } from '../../enum';
-import { getPost, createPost, updatePost } from '../../api';
+import { getPost, createPost, updatePost, deleteBatchImages } from '../../api';
 import './PostEditPage.css';
 import TiptapEditor from './TiptapEditor';
 
@@ -13,6 +13,7 @@ function PostEditPage() {
 
     const [title, setTitle] = useState("");
     const [selectedCategory, setSelectedCategory] = useState(Category.TALK);
+    const [fileIdList, setFileIdList] = useState([]);
     const [content, setContent] = useState("");
     const [isPinned, setIsPinned] = useState(false);
     const [loading, setLoading] = useState(isEditMode);
@@ -92,6 +93,17 @@ function PostEditPage() {
         }
     };
 
+    const handleCancel = async () => {
+        if (fileIdList.length > 0) {
+            try {
+                await deleteBatchImages(fileIdList);
+            } catch (error) {
+                console.warn("취소 시 이미지 즉시 삭제 실패 (추후 스케줄러가 자동 정리함):", error);
+            }
+        }
+        navigate(-1);
+    };
+
     if (loading) {
         return <div className="PostEditContainer" style={{ textAlign: 'center', padding: '60px' }}>게시글을 불러오는 중...</div>;
     }
@@ -141,11 +153,12 @@ function PostEditPage() {
                     onChange={setContent}
                     content={content}
                     postId={id ? Number(id) : null}
+                    setFileIdList={setFileIdList}
                 />
             </div>
 
             <div className="PostEditActions">
-                <button className="CancelBtn" onClick={() => navigate(-1)}>취소</button>
+                <button className="CancelBtn" onClick={handleCancel}>취소</button>
                 <button className="SubmitBtn" onClick={handleSubmit}>
                     {isEditMode ? "수정 완료" : "등록하기"}
                 </button>

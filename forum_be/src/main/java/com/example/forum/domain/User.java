@@ -16,7 +16,7 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class User extends BaseEntity{
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,5 +38,12 @@ public class User extends BaseEntity{
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Grade grade;
-    
+
+    public void update(String userPassword, String userName) {
+        if (userPassword != null)
+            this.userPassword = userPassword;
+        if (userName != null)
+            this.userName = userName;
+    }
+
 }

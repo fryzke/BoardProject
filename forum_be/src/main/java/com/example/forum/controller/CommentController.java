@@ -1,6 +1,6 @@
 package com.example.forum.controller;
 
-import java.util.Map;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.forum.dto.CommentRequestDto;
 import com.example.forum.dto.CommentResponseDto;
+import com.example.forum.dto.common.ApiResponse;
 import com.example.forum.service.CommentService;
 import com.example.forum.service.UserService;
 
@@ -31,79 +32,56 @@ public class CommentController {
     private final UserService userService;
 
     /*
-     * POST api/comments/{postId}
+     * POST /api/comments/{postId}
      * 댓글 작성
      */
     @PostMapping("/{postId}")
-    public ResponseEntity<?> createComment(
+    public ResponseEntity<ApiResponse<CommentResponseDto>> createComment(
             @AuthenticationPrincipal String userId,
             @PathVariable Long postId,
             @Valid @RequestBody CommentRequestDto dto) {
-        try {
-            CommentResponseDto response = commentService.createComment(postId, dto, userId);
-            userService.updateGrade(userId);
-            return ResponseEntity.ok(Map.of("success", true, "data", response, "message", "댓글이 성공적으로 작성되었습니다."));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
-        }
+        CommentResponseDto response = commentService.createComment(postId, dto, userId);
+        userService.updateGrade(userId);
+        return ResponseEntity.ok(ApiResponse.success(response, "댓글이 성공적으로 작성되었습니다."));
     }
 
     /*
-     * GET api/comments/{postId}
+     * GET /api/comments/{postId}
      * 댓글 불러오기
      */
     @GetMapping("/{postId}")
-    public ResponseEntity<?> getComments(@RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int limit, @PathVariable Long postId) {
-        try {
-            Page<CommentResponseDto> response = commentService.getCommentsByPost(page, limit, postId);
-            Map<String, Object> result = Map.of(
-                    "success", true,
-                    "data", response.getContent(),
-                    "pagination", Map.of(
-                            "currentPage", response.getNumber() + 1,
-                            "totalPages", response.getTotalPages(),
-                            "totalComments", response.getTotalElements()
-                    ),
-                    "message", "댓글을 성공적으로 조회하였습니다.");
-            return ResponseEntity.ok(result);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<List<CommentResponseDto>>> getComments(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @PathVariable Long postId) {
+        Page<CommentResponseDto> response = commentService.getCommentsByPost(page, limit, postId);
+        return ResponseEntity.ok(ApiResponse.ofPage(response.getContent(), response, "댓글을 성공적으로 조회하였습니다."));
     }
 
     /*
-     * PUT api/comments/{postId}/{commentId}
+     * PUT /api/comments/{postId}/{commentId}
      * 댓글 수정하기
      */
     @PutMapping("/{postId}/{commentId}")
-    public ResponseEntity<?> putComments(
+    public ResponseEntity<ApiResponse<CommentResponseDto>> putComments(
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @Valid @RequestBody CommentRequestDto dto,
             @AuthenticationPrincipal String userId) {
-        try {
-            CommentResponseDto response = commentService.updateComment(postId, commentId, dto, userId);
-            return ResponseEntity.ok(Map.of("success", true, "data", response, "message", "댓글을 성공적으로 수정하였습니다."));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
-        }
+        CommentResponseDto response = commentService.updateComment(postId, commentId, dto, userId);
+        return ResponseEntity.ok(ApiResponse.success(response, "댓글을 성공적으로 수정하였습니다."));
     }
 
     /*
-     * DELETE api/comments/{postId}/{commentId}
+     * DELETE /api/comments/{postId}/{commentId}
      * 댓글 삭제하기
      */
     @DeleteMapping("/{postId}/{commentId}")
-    public ResponseEntity<?> deleteComment(
+    public ResponseEntity<ApiResponse<Void>> deleteComment(
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @AuthenticationPrincipal String userId) {
-        try {
-            commentService.deleteComment(postId, commentId, userId);
-            return ResponseEntity.ok(Map.of("success", true, "message", "댓글을 성공적으로 삭제하였습니다."));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
-        }
+        commentService.deleteComment(postId, commentId, userId);
+        return ResponseEntity.ok(ApiResponse.success("댓글을 성공적으로 삭제하였습니다."));
     }
 }

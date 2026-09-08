@@ -216,6 +216,16 @@ export const deleteImage = async (imageId) => {
     }
 };
 
+export const deleteBatchImages = async (fileIds) => {
+    try {
+        const response = await api.post('/images/delete-batch', fileIds);
+        return response.data;
+    } catch (error) {
+        console.error("Delete batch images error:", error);
+        throw error;
+    }
+};
+
 // ===== Comment APIs (백엔드 실제 연동) =====
 
 export const getComments = async (postId, page = 1, limit = 10, options = {}) => {

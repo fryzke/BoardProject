@@ -33,6 +33,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final FileRepository fileRepository;
+    private final FileService fileService;
     private final RedisViewCountService redisViewCountService;
     private final PostValidator postValidator;
     private final ApplicationEventPublisher eventPublisher;
@@ -55,12 +56,7 @@ public class PostService {
 
         postRepository.save(post);
 
-        List<File> unlinkedFiles = fileRepository.findAllByAuthorAndPostIsNull(author);
-        for (File file : unlinkedFiles) {
-            if (dto.getContent().contains(file.getAccessUrl())) {
-                file.setPost(post);
-            }
-        }
+        fileService.deleteUnlinkedFile(post, dto);
 
         return post;
     }
@@ -144,12 +140,7 @@ public class PostService {
         post.update(dto.getTitle().trim(), dto.getCategory(), dto.getContent().trim(), dto.isPinned());
 
         // 새로 추가된 작성자의 미연결 파일 연결
-        List<File> unlinkedFiles = fileRepository.findAllByAuthorAndPostIsNull(post.getAuthor());
-        for (File file : unlinkedFiles) {
-            if (dto.getContent().contains(file.getAccessUrl())) {
-                file.setPost(post);
-            }
-        }
+        fileService.deleteUnlinkedFile(post, dto);
 
         // 본문에서 제거된 기존 파일 Soft Delete 및 물리 파일 삭제 이벤트 발행
         List<File> savedFiles = fileRepository.findAllByPostId(id);

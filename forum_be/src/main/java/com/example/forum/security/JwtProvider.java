@@ -30,6 +30,7 @@ public class JwtProvider {
      * 유저 ID와 Role을 기반으로 JWT 토큰을 생성
      */
     public JwtTokenDto createToken(Authentication authentication) {
+        
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));

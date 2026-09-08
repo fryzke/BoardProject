@@ -1,5 +1,6 @@
 package com.example.forum.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -24,6 +25,8 @@ public interface FileRepository extends JpaRepository<File, Long> {
 
     int countByPostId(Long postId);
 
-    @Query("SELECT COALESCE(SUM(f.fileSize)) AS totalSize FROM File f WHERE f.postId = :postId")
+    @Query("SELECT COALESCE(SUM(f.fileSize)) AS totalSize FROM File f WHERE f.post.id = :postId")
     Long sumTotalSizeByPostId(@Param("postId") Long postId);
+
+    List<File> findAllByPostIsNullAndCreatedAtBefore(LocalDateTime threshold);
 }

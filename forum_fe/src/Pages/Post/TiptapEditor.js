@@ -10,11 +10,8 @@ import {
 } from 'lucide-react';
 import { normalizeContentForEditor } from '../../utils';
 import { uploadImage } from '../../api';
+import { FileMaximum } from '../../enum';
 import './TiptapEditor.css';
-
-const MAX_SIZE = 20 * 1024 * 1024;
-const TOTAL_MAX_SIZE = 100 * 1024 * 1024;
-const TOTAL_IMAGE_NUMBER = 10;
 
 const MenuBar = ({ editor, onImageUploadClick }) => {
     if (!editor) {
@@ -130,9 +127,9 @@ const MenuBar = ({ editor, onImageUploadClick }) => {
     );
 };
 
-export default function TiptapEditor({ content, onChange, postId }) {
+export default function TiptapEditor({ content, onChange, postId, setFileIdList }) {
     const [totalSize, setTotalSize] = useState(0);
-    const [totalImage, setTotalImage] = useState(0);
+    const [totalFileCount, settotalFileCount] = useState(0);
     const fileInputRef = useRef(null);
 
     const editor = useEditor({
@@ -169,21 +166,21 @@ export default function TiptapEditor({ content, onChange, postId }) {
 
         if (!file) return;
 
-        const fileSize = file.size();
+        const fileSize = file.size;
 
-        if (totalImage > TOTAL_IMAGE_NUMBER) {
+        if (totalFileCount > FileMaximum.TOTAL_IMAGE_NUMBER) {
             alert("파일은 최대 10개까지 업로드 가능합니다.");
             event.target.value = '';
             return;
         }
 
-        if (fileSize > MAX_SIZE) {
+        if (fileSize > FileMaximum.MAX_SIZE) {
             alert("파일은 최대 20mb까지 업로드 가능합니다.");
             event.target.value = '';
         }
 
 
-        if (totalSize > TOTAL_MAX_SIZE) {
+        if (totalSize > FileMaximum.TOTAL_MAX_SIZE) {
             alert("파일은 총합 100mb까지 업로드할 수 있습니다.");
             setTotalSize(totalSize - fileSize);
             return;
@@ -193,7 +190,9 @@ export default function TiptapEditor({ content, onChange, postId }) {
             const result = await uploadImage(file, postId);
             if (result.success && result.url) {
                 editor.chain().focus().setImage({ src: result.url }).run();
-                setTotalSize(totalSize + fileSize);
+                setTotalSize(pre=> pre + fileSize);
+                settotalFileCount(pre=> pre + 1);
+                setFileIdList(pre=> [...pre, result.data.id])
             } else {
                 alert(result.message || '이미지 업로드에 실패했습니다.');
             }
@@ -202,7 +201,7 @@ export default function TiptapEditor({ content, onChange, postId }) {
         } finally {
             event.target.value = '';
         }
-    }, [editor, postId]);
+    }, [editor, postId, totalFileCount, totalSize]);
 
     const triggerFileInput = useCallback(() => {
         fileInputRef.current?.click();

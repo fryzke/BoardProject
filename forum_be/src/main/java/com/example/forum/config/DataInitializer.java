@@ -9,6 +9,7 @@ import com.example.forum.repository.PostRepository;
 import com.example.forum.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -25,8 +26,16 @@ public class DataInitializer implements CommandLineRunner {
     private final PostRepository postRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${app.init-data:true}")
+    private boolean initData;
+
     @Override
     public void run(String... args) {
+        if (!initData) {
+            log.info("=== Mock Data Initialization disabled via app.init-data=false ===");
+            return;
+        }
+
         // 1. 유저 목데이터 생성 (없을 경우)
         User user1;
         User user2;
@@ -69,7 +78,7 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // 2. 게시글 목데이터 생성
-        if (user1 != null && postRepository.count() == 0) {
+        if (user1 != null && postRepository.countAllIncludingDeleted() == 0) {
             List<Post> mockPosts = new ArrayList<>();
             User[] authors = { user1, user2 != null ? user2 : user1, admin != null ? admin : user1 };
             Category[] categories = Category.values();

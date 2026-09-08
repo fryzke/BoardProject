@@ -12,10 +12,16 @@ import com.example.forum.domain.Post;
 import com.example.forum.domain.User;
 import com.example.forum.dto.FileRequestDto;
 import com.example.forum.dto.FileResponseDto;
+import com.example.forum.dto.PostDto;
 import com.example.forum.event.FileDeleteEvent;
 import com.example.forum.repository.FileRepository;
 import com.example.forum.repository.PostRepository;
 import com.example.forum.repository.UserRepository;
+import com.example.forum.validator.FileValidator;
+
+import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
+import com.example.forum.service.storage.FileStorageServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,12 +33,25 @@ public class FileService {
     private final FileRepository fileRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final FileValidator fileValidator;
+    private final FileStorageServiceImpl fileStorageService;
 
-    int MAX_IMAGE = 10;
-    Long MAX_SIZE = 100 * 1024 * 1024L;
+    public FileResponseDto uploadFile(MultipartFile file, Long postId, String loginUserId) {
+        List<FileResponseDto> result = uploadFiles(List.of(file), postId, loginUserId);
+        return result.get(0);
+    }
 
-    // 파일 메타데이터 저장
-    public FileResponseDto createFile(FileRequestDto dto, Long postId, String loginUserId) {
+    public List<FileResponseDto> uploadFiles(List<MultipartFile> files, Long postId, String loginUserId) {
+        fileValidator.validateLogin(loginUserId);
+
+        if (files == null || files.isEmpty()) {
+            throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+        }
+
+        for (MultipartFile file : files) {
+            fileValidator.validateSingleFile(file);
+        }
+
         Post post = null;
         if (postId != null) {
             post = postRepository.findById(postId)
@@ -41,18 +60,41 @@ public class FileService {
         User user = userRepository.findByUserId(loginUserId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        File file = File.builder()
-                .originalName(dto.getOriginalName())
-                .storedName(dto.getStoredName())
-                .accessUrl(dto.getAccessUrl())
-                .post(post)
-                .author(user)
-                .fileSize(dto.getFileSize())
-                .contentType(dto.getContentType())
-                .build();
+        List<FileResponseDto> responseList = new ArrayList<>();
+        List<Runnable> physicalSaveTasks = new ArrayList<>();
 
-        fileRepository.save(file);
-        return new FileResponseDto(file);
+        for (MultipartFile file : files) {
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String storedName = UUID.randomUUID().toString() + extension;
+            String accessUrl = fileStorageService.getAccessUrl(storedName);
+
+            File fileEntity = File.builder()
+                    .originalName(originalFilename)
+                    .storedName(storedName)
+                    .accessUrl(accessUrl)
+                    .post(post)
+                    .author(user)
+                    .fileSize(file.getSize())
+                    .contentType(file.getContentType())
+                    .build();
+
+            fileRepository.save(fileEntity);
+            responseList.add(new FileResponseDto(fileEntity));
+
+            physicalSaveTasks.add(() -> fileStorageService.savePhysicalFile(file, storedName));
+        }
+
+        fileValidator.validateFilesCountAndSize(files, postId);
+
+        for (Runnable task : physicalSaveTasks) {
+            task.run();
+        }
+
+        return responseList;
     }
 
     // 파일 단건 조회
@@ -79,32 +121,57 @@ public class FileService {
 
     // 파일 삭제 (Soft Delete + 물리 파일 삭제 이벤트 발행)
     public void deleteFile(Long id, String loginId) {
-        if (loginId == null) {
-            throw new IllegalArgumentException("로그인이 필요합니다.");
-        }
+        fileValidator.validateLogin(loginId);
 
         File file = fileRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 파일입니다."));
 
-        if (!file.getAuthor().getUserId().equals(loginId)) {
-            throw new IllegalArgumentException("본인이 업로드한 파일만 삭제할 수 있습니다.");
-        }
+        fileValidator.validateAuthor(loginId, file);
 
         fileRepository.delete(file);
         eventPublisher.publishEvent(new FileDeleteEvent(file.getStoredName()));
     }
 
+    // 파일 다중 삭제 (Soft Delete + 물리 파일 비동기 삭제 이벤트 발행)
+    public void deleteFilesBatch(List<Long> fileIds, String loginId) {
+        fileValidator.validateLogin(loginId);
+
+        if (fileIds == null || fileIds.isEmpty()) {
+            return;
+        }
+
+        List<File> files = fileRepository.findAllById(fileIds);
+        for (File file : files) {
+            fileValidator.validateAuthor(loginId, file);
+            fileRepository.delete(file);
+            eventPublisher.publishEvent(new FileDeleteEvent(file.getStoredName()));
+        }
+    }
+
+    // 스케줄러/시스템 전용 파일 삭제 (권한 검증 없이 삭제 + 이벤트 발행)
+    public void deleteFileBySystem(File file) {
+        fileRepository.delete(file);
+        eventPublisher.publishEvent(new FileDeleteEvent(file.getStoredName()));
+    }
+
+    // postId 가 미연결된 파일 삭제
+    public void deleteUnlinkedFile(Post post, PostDto dto) {
+        List<File> unlinkedFiles = fileRepository.findAllByAuthorAndPostIsNull(post.getAuthor());
+        for (File file : unlinkedFiles) {
+            if (dto.getContent().contains(file.getAccessUrl())) {
+                file.setPost(post);
+            }
+        }
+    }
+
     // 파일 메타데이터 수정
     public FileResponseDto editFile(FileRequestDto dto, Long id, String loginId) {
-        if (loginId == null) {
-            throw new IllegalArgumentException("로그인이 필요합니다.");
-        }
+        fileValidator.validateLogin(loginId);
+
         File file = fileRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 파일입니다."));
 
-        if (!loginId.equals(file.getAuthor().getUserId())) {
-            throw new IllegalArgumentException("본인이 업로드한 파일만 수정할 수 있습니다.");
-        }
+        fileValidator.validateAuthor(loginId, file);
         file.update(dto);
         return new FileResponseDto(file);
     }
