@@ -6,14 +6,14 @@ import DOMPurify from 'dompurify';
 import { useRef, useCallback, useEffect, useState } from 'react';
 import {
     Bold, Italic, Strikethrough, Heading1, Heading2, Heading3,
-    List, ListOrdered, ImageIcon, AlignLeft, AlignCenter, AlignRight, AlignJustify
+    List, ListOrdered, ImageIcon, AlignLeft, AlignCenter, AlignRight, AlignJustify, FileUp
 } from 'lucide-react';
 import { normalizeContentForEditor } from '../../utils';
 import { uploadImage } from '../../api';
 import { FileMaximum } from '../../enum';
 import './TiptapEditor.css';
 
-const MenuBar = ({ editor, onImageUploadClick }) => {
+const MenuBar = ({ editor, onFileUploadClick, onImageUploadClick }) => {
     if (!editor) {
         return null;
     }
@@ -123,6 +123,13 @@ const MenuBar = ({ editor, onImageUploadClick }) => {
             >
                 <ImageIcon size={18} />
             </button>
+            <button
+                type="button"
+                onClick={onFileUploadClick}
+                title="첨부파일 업로드"
+            >
+                <FileUp size={18} />
+            </button>
         </div>
     );
 };
@@ -131,7 +138,8 @@ export default function TiptapEditor({ content, onChange, postId, setFileIdList 
     const [totalSize, setTotalSize] = useState(0);
     const [totalFileCount, settotalFileCount] = useState(0);
     const fileInputRef = useRef(null);
-
+    const imageInputRef = useRef(null);
+    
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -189,10 +197,29 @@ export default function TiptapEditor({ content, onChange, postId, setFileIdList 
         try {
             const result = await uploadImage(file, postId);
             if (result.success && result.url) {
-                editor.chain().focus().setImage({ src: result.url }).run();
-                setTotalSize(pre=> pre + fileSize);
-                settotalFileCount(pre=> pre + 1);
-                setFileIdList(pre=> [...pre, result.data.id])
+                if (file.type === 'image') {
+                    editor.chain().focus().setImage({ src: result.url }).run();
+                } else {
+                    editor.chain().focus()
+                        .insertContent({
+                            type: 'text',
+                            text: `📎 ${file.name}`,
+                            marks: [
+                                {
+                                    type: 'link',
+                                    attrs: {
+                                        href: result.url,
+                                        target: '_blank',
+                                    },
+                                },
+                            ],
+                        })
+                        .insertContent(' ')
+                        .run();
+                }
+                setTotalSize(pre => pre + fileSize);
+                settotalFileCount(pre => pre + 1);
+                setFileIdList(pre => [...pre, result.data.id])
             } else {
                 alert(result.message || '이미지 업로드에 실패했습니다.');
             }
@@ -201,10 +228,14 @@ export default function TiptapEditor({ content, onChange, postId, setFileIdList 
         } finally {
             event.target.value = '';
         }
-    }, [editor, postId, totalFileCount, totalSize]);
+    }, [editor, postId, totalFileCount, totalSize, setFileIdList]);
 
     const triggerFileInput = useCallback(() => {
         fileInputRef.current?.click();
+    }, []);
+
+    const triggerImageInput = useCallback(() => {
+        imageInputRef.current?.click();
     }, []);
 
     if (!editor) {
@@ -213,12 +244,22 @@ export default function TiptapEditor({ content, onChange, postId, setFileIdList 
 
     return (
         <div className="tiptap-container">
-            <MenuBar editor={editor} onImageUploadClick={triggerFileInput} />
+            <MenuBar editor={editor} onFileUploadClick={triggerFileInput} onImageUploadClick={triggerImageInput} />
+            <input
+                type="file"
+                ref={imageInputRef}
+                style={{ display: 'none' }}
+                accept="image/*"
+                onChange={handleFileChange}
+            />
             <input
                 type="file"
                 ref={fileInputRef}
                 style={{ display: 'none' }}
-                accept="image/*"
+                accept="application/pdf, application/msword, text/plain, 
+                application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 
+                application/vnd.openxmlformats-officedocument.presentationml.presentation, 
+                application/zip"
                 onChange={handleFileChange}
             />
             <EditorContent editor={editor} className="tiptap-content" />

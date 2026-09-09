@@ -1,5 +1,6 @@
 package com.example.forum.service;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +29,7 @@ public class UserService {
      * - 유저 id로 게시글/댓글 수 Count
      * - 기준에 맞는 등급으로 grade 갱신
      */
-
+    @Async("taskExecutor")
     public void updateGrade(String userId) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));

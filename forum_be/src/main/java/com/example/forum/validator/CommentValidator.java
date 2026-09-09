@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 
 import com.example.forum.domain.Comment;
 import com.example.forum.domain.Post;
-import com.example.forum.dto.CommentRequestDto;
 
 @Component
 public class CommentValidator {
@@ -16,7 +15,7 @@ public class CommentValidator {
     /**
      * 댓글 생성 비즈니스 검증
      */
-    public void validateCreate(CommentRequestDto dto, Post post, Comment parentComment, Long postId) {
+    public void validateCreate(Post post, Comment parentComment, Long postId) {
         if (parentComment != null) {
             // 다른 게시글의 댓글에 답글 작성 방지
             if (!parentComment.getPost().getId().equals(postId)) {
@@ -33,7 +32,7 @@ public class CommentValidator {
     /**
      * 댓글 수정 비즈니스 검증
      */
-    public void validateUpdate(Comment comment, CommentRequestDto dto, Long postId, String loginUserId) {
+    public void validateUpdate(Comment comment, Long postId, String loginUserId) {
         validateCommon(comment, postId, loginUserId);
 
         if (comment.isDeleted()) {

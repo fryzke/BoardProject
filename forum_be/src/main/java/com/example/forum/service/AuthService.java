@@ -42,7 +42,7 @@ public class AuthService {
      * - Role.USER 기본 할당
      */
     public void signUp(SignUpDto dto) {
-        authValidator.validateSignUp(dto, userRepository.existsByUserId(dto.getUserId()));
+        authValidator.validateSignUp(userRepository.existsByUserId(dto.getUserId()));
 
         User user = User.builder()
                 .userId(dto.getUserId().trim())
