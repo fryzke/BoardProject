@@ -61,29 +61,26 @@ public class FileValidator {
         }
     }
 
-    public void validateFilesCountAndSize(List<MultipartFile> files, Long postId) {
-        if (files == null || files.isEmpty()) {
-            throw new IllegalArgumentException("업로드할 파일이 없습니다.");
-        }
-
-        long newFilesCount = files.size();
-        long newFilesTotalSize = files.stream().mapToLong(MultipartFile::getSize).sum();
-
-        long existingCount = 0;
-        long existingTotalSize = 0;
+    public void validateFilesCountAndSize(Long postId, com.example.forum.domain.User user) {
+        long currentCount = 0;
+        long currentTotalSize = 0;
 
         if (postId != null) {
-            existingCount = fileRepository.countByPostId(postId);
+            currentCount = fileRepository.countByPostId(postId);
             Long sumSize = fileRepository.sumTotalSizeByPostId(postId);
-            existingTotalSize = (sumSize != null) ? sumSize : 0L;
+            currentTotalSize = (sumSize != null) ? sumSize : 0L;
+        } else if (user != null) {
+            currentCount = fileRepository.countByAuthorAndPostIsNull(user);
+            Long sumSize = fileRepository.sumTotalSizeByAuthorAndPostIsNull(user);
+            currentTotalSize = (sumSize != null) ? sumSize : 0L;
         }
 
-        if (existingCount + newFilesCount > maxFiles) {
-            throw new IllegalArgumentException("파일은 최대 " + maxFiles + "개까지만 업로드할 수 있습니다.");
+        if (currentCount > maxFiles) {
+            throw new IllegalArgumentException("파일은 최대 " + maxFiles + "개까지만 업로드할 수 있습니다. (현재: " + currentCount + "개)");
         }
 
-        if (existingTotalSize + newFilesTotalSize > totalMaxSize) {
-            throw new IllegalArgumentException("전체 파일 총용량이 제한을 초과하였습니다.");
+        if (currentTotalSize > totalMaxSize) {
+            throw new IllegalArgumentException("전체 파일 총용량이 제한(100MB)을 초과하였습니다.");
         }
     }
 }

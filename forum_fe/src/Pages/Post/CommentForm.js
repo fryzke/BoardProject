@@ -1,25 +1,28 @@
 import { useState } from "react";
 import { createComment, updateComment } from "../../api";
+import { CommentValidation } from "../../enum";
+import { useToast } from "../../Components/Toast/ToastContext";
 
 function CommentForm({ postId, comment, parentId, onSuccess, onCancel }) {
+    const toast = useToast();
     const [content, setContent] = useState(comment?.content || "");
     const isEditMode = !!comment;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!content.trim() || content.length > 400) {
-            alert("본문 내용을 입력해주세요 (최대 400자).");
+        if (!content.trim() || content.length > CommentValidation.MAX_CONTENT_LENGTH) {
+            toast.warning(`본문 내용을 입력해주세요 (최대 ${CommentValidation.MAX_CONTENT_LENGTH}자).`);
             return;
         }
 
         try {
             if (isEditMode) {
                 await updateComment(postId, comment.id, content, comment.parentId);
-                alert("댓글이 수정되었습니다.");
+                toast.success("댓글이 수정되었습니다.");
             } else {
                 await createComment(postId, content, parentId || null);
-                alert("댓글이 등록되었습니다.");
+                toast.success("댓글이 등록되었습니다.");
                 setContent("");
             }
 
@@ -28,7 +31,7 @@ function CommentForm({ postId, comment, parentId, onSuccess, onCancel }) {
             }
         } catch (error) {
             console.error("댓글 처리 오류:", error);
-            alert(error.response?.data?.message || "처리 중 오류가 발생했습니다.");
+            toast.error(error.response?.data?.message || "처리 중 오류가 발생했습니다.");
         }
     };
 

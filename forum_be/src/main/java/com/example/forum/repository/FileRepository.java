@@ -25,8 +25,15 @@ public interface FileRepository extends JpaRepository<File, Long> {
 
     int countByPostId(Long postId);
 
+    int countByAuthorAndPostIsNull(User author);
+
+    java.util.Optional<File> findByStoredName(String storedName);
+
     @Query("SELECT COALESCE(SUM(f.fileSize)) AS totalSize FROM File f WHERE f.post.id = :postId")
     Long sumTotalSizeByPostId(@Param("postId") Long postId);
+
+    @Query("SELECT COALESCE(SUM(f.fileSize)) AS totalSize FROM File f WHERE f.author = :author AND f.post IS NULL")
+    Long sumTotalSizeByAuthorAndPostIsNull(@Param("author") User author);
 
     List<File> findAllByPostIsNullAndCreatedAtBefore(LocalDateTime threshold);
 }

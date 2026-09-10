@@ -88,7 +88,7 @@ public class FileService {
             physicalSaveTasks.add(() -> fileStorageService.savePhysicalFile(file, storedName));
         }
 
-        fileValidator.validateFilesCountAndSize(files, postId);
+        fileValidator.validateFilesCountAndSize(postId, user);
 
         for (Runnable task : physicalSaveTasks) {
             task.run();
@@ -174,5 +174,65 @@ public class FileService {
         fileValidator.validateAuthor(loginId, file);
         file.update(dto);
         return new FileResponseDto(file);
+    }
+
+    // 파일 교체 (메타데이터 수정 -> 2차 검증 -> 물리 파일 저장 및 이전 파일 삭제)
+    public FileResponseDto replaceFile(MultipartFile file, Long fileId, String loginId) {
+        fileValidator.validateLogin(loginId);
+        fileValidator.validateSingleFile(file);
+
+        File fileEntity = fileRepository.findById(fileId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 파일입니다."));
+
+        fileValidator.validateAuthor(loginId, fileEntity);
+
+        String oldStoredName = fileEntity.getStoredName();
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        String newStoredName = UUID.randomUUID().toString() + extension;
+        String newAccessUrl = fileStorageService.getAccessUrl(newStoredName);
+
+        // 1) 메타데이터 변경 및 저장
+        FileRequestDto updateDto = FileRequestDto.builder()
+                .originalName(originalFilename)
+                .storedName(newStoredName)
+                .accessUrl(newAccessUrl)
+                .fileSize(file.getSize())
+                .contentType(file.getContentType())
+                .build();
+        fileEntity.update(updateDto);
+
+        // 2) 백엔드 2차 검증
+        fileValidator.validateFilesCountAndSize(fileEntity.getPost() != null ? fileEntity.getPost().getId() : null, fileEntity.getAuthor());
+
+        // 3) 물리 파일 저장 및 이전 물리 파일 비동기 삭제 이벤트 발행
+        fileStorageService.savePhysicalFile(file, newStoredName);
+        eventPublisher.publishEvent(new FileDeleteEvent(oldStoredName));
+
+        return new FileResponseDto(fileEntity);
+    }
+
+    public record FileDownloadDto(org.springframework.core.io.Resource resource, String originalName, String contentType) {}
+
+    // 파일 다운로드 (ID 기준)
+    @Transactional(readOnly = true)
+    public FileDownloadDto downloadFile(Long id) {
+        File file = fileRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 파일입니다."));
+        org.springframework.core.io.Resource resource = fileStorageService.loadFileAsResource(file.getStoredName());
+        return new FileDownloadDto(resource, file.getOriginalName(), file.getContentType());
+    }
+
+    // 파일 다운로드 (저장된 파일명 기준)
+    @Transactional(readOnly = true)
+    public FileDownloadDto downloadFileByStoredName(String storedName) {
+        File file = fileRepository.findByStoredName(storedName).orElse(null);
+        org.springframework.core.io.Resource resource = fileStorageService.loadFileAsResource(storedName);
+        String originalName = file != null ? file.getOriginalName() : storedName;
+        String contentType = file != null ? file.getContentType() : "application/octet-stream";
+        return new FileDownloadDto(resource, originalName, contentType);
     }
 }

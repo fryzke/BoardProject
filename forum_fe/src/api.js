@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { showToast } from './Components/Toast/ToastContext';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -40,7 +41,7 @@ api.interceptors.response.use(
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('userId');
                 localStorage.removeItem('userName');
-                alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+                showToast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
                 window.location.replace('/sign-in');
                 return Promise.reject(reissueError);
             }
@@ -93,6 +94,28 @@ export const logoutUser = async () => {
 export const reissueToken = async () => {
     const response = await api.post('/auth/reissue');
     return response.data;
+};
+
+// ===== User APIs (마이페이지 연동) =====
+
+export const getUserInfo = async () => {
+    try {
+        const response = await api.get('/users/me');
+        return response.data;
+    } catch (error) {
+        console.error("Get user info error:", error);
+        throw error;
+    }
+};
+
+export const updateUserInfo = async (userData) => {
+    try {
+        const response = await api.put('/users/me', userData);
+        return response.data;
+    } catch (error) {
+        console.error("Update user info error:", error);
+        throw error;
+    }
 };
 
 // ===== Post APIs (백엔드 실제 연동) =====

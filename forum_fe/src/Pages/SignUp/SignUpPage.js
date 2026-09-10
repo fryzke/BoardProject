@@ -2,41 +2,42 @@ import "./SignUpPage.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../../api";
-
-const regexPwd = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[+=%_!@#$^&*?]).{8,}$/;
-
-async function handleRegistration(nickname, id, pwd, valid, navigate) {
-    if (valid) {
-        try {
-            const result = await registerUser(id, pwd, nickname);
-            if (result.success) {
-                alert("회원가입이 완료되었습니다!");
-                navigate("/sign-in");
-            } else {
-                alert(result.message || "회원가입에 실패했습니다.");
-            }
-        } catch (error) {
-            alert("회원가입에 실패했습니다.");
-        }
-    }
-}
+import { AuthValidation } from "../../enum";
+import { useToast } from "../../Components/Toast/ToastContext";
 
 function SignUpPage() {
     const navigate = useNavigate();
+    const toast = useToast();
     const [nickname, setNickName] = useState("");
     const [id, setId] = useState("");
     const [pwd, setPwd] = useState("");
 
     const validNickname = nickname.trim().length > 0;
-    const validId = id.trim().length >= 4 && id.trim().length <= 16;
-    const validPwd = regexPwd.test(pwd);
+    const validId = id.trim().length >= AuthValidation.MIN_ID_LENGTH && id.trim().length <= AuthValidation.MAX_ID_LENGTH;
+    const validPwd = AuthValidation.PASSWORD_REGEX.test(pwd);
     const validation = validId && validNickname && validPwd;
+
+    const handleRegistration = async () => {
+        if (validation) {
+            try {
+                const result = await registerUser(id, pwd, nickname);
+                if (result.success) {
+                    toast.success("회원가입이 완료되었습니다!");
+                    navigate("/sign-in");
+                } else {
+                    toast.error(result.message || "회원가입에 실패했습니다.");
+                }
+            } catch (error) {
+                toast.error("회원가입에 실패했습니다.");
+            }
+        }
+    };
 
     const handleEnter = (event) => {
         if (event.key === 'Enter') {
-            handleRegistration(nickname, id, pwd, validation, navigate);
+            handleRegistration();
         }
-    }
+    };
 
     return (
         <div className="SignUp">
@@ -74,7 +75,7 @@ function SignUpPage() {
                     </div>
                 </div>
                 <button className="SignUpButton" disabled={!validation}
-                    onClick={() => handleRegistration(nickname, id, pwd, validation, navigate)}
+                    onClick={handleRegistration}
                 >
                     회원가입
                 </button>

@@ -2,20 +2,32 @@ import { useState } from "react";
 import { formatDate } from "../../utils";
 import { deleteComment } from '../../api';
 import CommentForm from "./CommentForm";
+import { useToast } from "../../Components/Toast/ToastContext";
+import { useModal } from "../../Components/Modal/ModalContext";
 
 function CommentItem({ postId, isLoggedIn, currentUserId, comment, isReply = false, onRefresh }) {
+    const toast = useToast();
+    const { confirm } = useModal();
     const isAuthor = Boolean(isLoggedIn && currentUserId && comment && comment.author === currentUserId);
     const [isAddComment, setIsAddComment] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
 
     const handleDelete = async () => {
-        if (window.confirm("댓글을 삭제하시겠습니까?")) {
+        const isConfirmed = await confirm({
+            title: "댓글 삭제",
+            message: "댓글을 삭제하시겠습니까?",
+            confirmText: "삭제",
+            cancelText: "취소",
+            isDestructive: true,
+        });
+
+        if (isConfirmed) {
             try {
                 await deleteComment(postId, comment.id);
-                alert("삭제되었습니다.");
+                toast.success("댓글이 삭제되었습니다.");
                 onRefresh();
             } catch (error) {
-                alert("삭제에 실패했습니다.");
+                toast.error("댓글 삭제에 실패했습니다.");
             }
         }
     };

@@ -5,13 +5,15 @@ import './ForumPage.css';
 import Pagination from './Pagination';
 import { formatDate } from '../../utils';
 import { fetchPosts, logoutUser } from '../../api';
-import { Category } from '../../enum';
+import { Category, SortType, PaginationConfig } from '../../enum';
+import { useToast } from '../../Components/Toast/ToastContext';
 
 function ForumPage() {
     const navigate = useNavigate();
+    const toast = useToast();
     const [posts, setPosts] = useState([]);
-    const [currentCategory, setCurrentCategory] = useState("전체");
-    const [sort, setSort] = useState("latest");
+    const [currentCategory, setCurrentCategory] = useState(Category.ALL);
+    const [sort, setSort] = useState(SortType.LATEST);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalPosts, setTotalPosts] = useState(0);
@@ -37,13 +39,19 @@ function ForumPage() {
         const loadPosts = async () => {
             setLoading(true);
             var category = null;
-            if (currentCategory === "전체") {
+            if (currentCategory === Category.ALL) {
                 category = "all";
             } else {
                 category = currentCategory;
             }
             try {
-                const result = await fetchPosts(currentPage, 20, sort, category, { signal: controller.signal });
+                const result = await fetchPosts(
+                    currentPage,
+                    PaginationConfig.POSTS_PER_PAGE,
+                    sort,
+                    category,
+                    { signal: controller.signal }
+                );
                 setPosts(result.data);
                 setTotalPages(result.pagination.totalPages);
                 setCurrentPage(result.pagination.currentPage);
@@ -74,15 +82,15 @@ function ForumPage() {
             try {
                 const result = await logoutUser();
                 if (result.success) {
-                    alert("로그아웃 되었습니다.");
+                    toast.success("로그아웃 되었습니다.");
                 } else {
-                    alert("로그아웃에 실패하였습니다.");
+                    toast.error("로그아웃에 실패하였습니다.");
                     console.error("Failed to logout", result.message);
                 }
                 setIsLoggedIn(false);
                 setUserName("");
             } catch (error) {
-                alert("로그아웃에 실패하였습니다.");
+                toast.error("로그아웃에 실패하였습니다.");
                 console.error("Failed to logout :", error);
             }
         } else {
@@ -104,12 +112,20 @@ function ForumPage() {
                     <div className="NavActions">
                         {isLoggedIn && (
                             <>
-                                <span className="UserWelcome">
-                                    <strong>{userName}</strong> 님 환영합니다
+                                <span 
+                                    className="UserWelcome" 
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => navigate('/mypage')}
+                                    title="마이페이지로 이동"
+                                >
+                                    <strong>{userName}</strong> 님
                                 </span>
                                 <div className='UserWelcome'>
-                                    현재등급:{userGrade}
+                                    등급: {userGrade || '일반'}
                                 </div>
+                                <button className="ActionButton MyPageButton" onClick={() => navigate('/mypage')}>
+                                    마이페이지
+                                </button>
                                 <button className="ActionButton WriteButton" onClick={() => navigate('/write')}>
                                     글쓰기
                                 </button>
@@ -138,11 +154,11 @@ function ForumPage() {
                     </select>
 
                     <div className="ForumSortOptions">
-                        <span className={`SortOption ${sort === 'latest' ? 'active' : ''}`}
-                            onClick={() => setSort("latest")}>최신순</span>
+                        <span className={`SortOption ${sort === SortType.LATEST ? 'active' : ''}`}
+                            onClick={() => setSort(SortType.LATEST)}>최신순</span>
                         <span className="SortDivider">|</span>
-                        <span className={`SortOption ${sort === 'popular' ? 'active' : ''}`}
-                            onClick={() => setSort("popular")}>인기순</span>
+                        <span className={`SortOption ${sort === SortType.POPULAR ? 'active' : ''}`}
+                            onClick={() => setSort(SortType.POPULAR)}>인기순</span>
                     </div>
                 </div>
 
@@ -184,7 +200,7 @@ function ForumPage() {
                                                 {isPinned ? (
                                                     <span className="PinnedIconBadge">📌 고정</span>
                                                 ) : (
-                                                    totalPosts - (20 * (currentPage - 1)) - idx
+                                                    totalPosts - (PaginationConfig.POSTS_PER_PAGE * (currentPage - 1)) - idx
                                                 )}
                                             </td>
                                             <td className="TdCategory">{post.category}</td>

@@ -11,6 +11,7 @@ import {
 import { normalizeContentForEditor } from '../../utils';
 import { uploadImage } from '../../api';
 import { FileMaximum } from '../../enum';
+import { useToast } from '../../Components/Toast/ToastContext';
 import './TiptapEditor.css';
 
 const MenuBar = ({ editor, onFileUploadClick, onImageUploadClick }) => {
@@ -135,6 +136,7 @@ const MenuBar = ({ editor, onFileUploadClick, onImageUploadClick }) => {
 };
 
 export default function TiptapEditor({ content, onChange, postId, setFileIdList }) {
+    const toast = useToast();
     const [totalSize, setTotalSize] = useState(0);
     const [totalFileCount, settotalFileCount] = useState(0);
     const fileInputRef = useRef(null);
@@ -174,30 +176,42 @@ export default function TiptapEditor({ content, onChange, postId, setFileIdList 
 
         if (!file) return;
 
+        // 1차 프론트엔드 검증 시작
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'txt', 'xlsx', 'pptx', 'zip'];
+        const fileName = file.name || '';
+        const fileExtension = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
+
+        if (!allowedExtensions.includes(fileExtension)) {
+            toast.warning(`허용되지 않는 파일 형식입니다: .${fileExtension || 'unknown'}`);
+            event.target.value = '';
+            return;
+        }
+
+        if (totalFileCount >= FileMaximum.TOTAL_IMAGE_NUMBER) {
+            toast.warning(`파일은 최대 ${FileMaximum.TOTAL_IMAGE_NUMBER}개까지 업로드 가능합니다.`);
+            event.target.value = '';
+            return;
+        }
+
         const fileSize = file.size;
 
-        if (totalFileCount > FileMaximum.TOTAL_IMAGE_NUMBER) {
-            alert("파일은 최대 10개까지 업로드 가능합니다.");
-            event.target.value = '';
-            return;
-        }
-
         if (fileSize > FileMaximum.MAX_SIZE) {
-            alert("파일은 최대 20mb까지 업로드 가능합니다.");
+            toast.warning("파일은 최대 20MB까지 업로드 가능합니다.");
             event.target.value = '';
-        }
-
-
-        if (totalSize > FileMaximum.TOTAL_MAX_SIZE) {
-            alert("파일은 총합 100mb까지 업로드할 수 있습니다.");
-            setTotalSize(totalSize - fileSize);
             return;
         }
 
+        if (totalSize + fileSize > FileMaximum.TOTAL_MAX_SIZE) {
+            toast.warning("파일은 총합 100MB까지 업로드할 수 있습니다.");
+            event.target.value = '';
+            return;
+        }
+
+        // 1차 검증 통과 후 백엔드 업로드 요청
         try {
             const result = await uploadImage(file, postId);
             if (result.success && result.url) {
-                if (file.type === 'image') {
+                if (file.type.startsWith('image/')) {
                     editor.chain().focus().setImage({ src: result.url }).run();
                 } else {
                     editor.chain().focus()
@@ -210,6 +224,9 @@ export default function TiptapEditor({ content, onChange, postId, setFileIdList 
                                     attrs: {
                                         href: result.url,
                                         target: '_blank',
+                                        class: 'attachment-card',
+                                        'data-filename': file.name,
+                                        'data-filesize': String(file.size),
                                     },
                                 },
                             ],
@@ -219,16 +236,17 @@ export default function TiptapEditor({ content, onChange, postId, setFileIdList 
                 }
                 setTotalSize(pre => pre + fileSize);
                 settotalFileCount(pre => pre + 1);
-                setFileIdList(pre => [...pre, result.data.id])
+                setFileIdList(pre => [...pre, result.data.id]);
+                toast.success(`${file.name} 파일이 첨부되었습니다.`);
             } else {
-                alert(result.message || '이미지 업로드에 실패했습니다.');
+                toast.error(result.message || '파일 업로드에 실패했습니다.');
             }
         } catch (error) {
-            alert('이미지 업로드 중 오류가 발생했습니다.');
+            toast.error('파일 업로드 중 오류가 발생했습니다.');
         } finally {
             event.target.value = '';
         }
-    }, [editor, postId, totalFileCount, totalSize, setFileIdList]);
+    }, [editor, postId, totalFileCount, totalSize, setFileIdList, toast]);
 
     const triggerFileInput = useCallback(() => {
         fileInputRef.current?.click();

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { getComments } from "../../api";
+import { PaginationConfig } from "../../enum";
 import CommentForm from "./CommentForm";
 import CommentList from "./CommentList";
 import Pagination from "../Forum/Pagination";
@@ -14,7 +15,7 @@ function CommentSection({ postId, isLoggedIn, currentUserId }) {
     const fetchComments = useCallback(async (page = 1) => {
         if (!postId) return;
         try {
-            const result = await getComments(postId, page, 10);
+            const result = await getComments(postId, page, PaginationConfig.COMMENTS_PER_PAGE);
             setComments(result.data || []);
             if (result.pagination) {
                 setTotalPages(result.pagination.totalPages);

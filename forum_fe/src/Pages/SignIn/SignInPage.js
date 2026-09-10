@@ -31,7 +31,9 @@ function SignInPage() {
     const [id, setId] = useState("");
     const [pwd, setPwd] = useState("");
     const [fail, setFail] = useState(false);
-    const validation = id.trim().length > 0 && pwd.trim().length > 0;
+
+    // 아이디와 비밀번호가 모두 공백이 아닐 때만 유효(활성화)
+    const isFormValid = id.trim().length > 0 && pwd.trim().length > 0;
 
     useEffect(() => {
         const isLoggedIn = !!localStorage.getItem("accessToken");
@@ -40,21 +42,43 @@ function SignInPage() {
         }
     }, [navigate]);
 
+    const handleIdChange = (e) => {
+        setId(e.target.value);
+        if (fail) setFail(false);
+    };
+
+    const handlePwdChange = (e) => {
+        setPwd(e.target.value);
+        if (fail) setFail(false);
+    };
+
     const handleEnter = (event) => {
-        if (event.key === 'Enter') {
-            handleLogin(id, pwd, validation, navigate, setFail);
+        if (event.key === 'Enter' && isFormValid) {
+            handleLogin(id.trim(), pwd, isFormValid, navigate, setFail);
         }
-    }
+    };
 
     return (
         <div className="SignIn">
             <div className="SignInWrapper">
                 <div className="SignInInputWrapper">
                     <div className="Id">
-                        <input type="text" placeholder="아이디" onChange={(e) => setId(e.target.value)} onKeyDown={handleEnter} />
+                        <input
+                            type="text"
+                            placeholder="아이디"
+                            value={id}
+                            onChange={handleIdChange}
+                            onKeyDown={handleEnter}
+                        />
                     </div>
                     <div className="Password">
-                        <input type="password" placeholder="비밀번호" onChange={(e) => setPwd(e.target.value)} onKeyDown={handleEnter} />
+                        <input
+                            type="password"
+                            placeholder="비밀번호"
+                            value={pwd}
+                            onChange={handlePwdChange}
+                            onKeyDown={handleEnter}
+                        />
                     </div>
                     <div className="Validation">
                         {
@@ -62,8 +86,10 @@ function SignInPage() {
                         }
                     </div>
                 </div>
-                <button className="SignInButton" disabled={!validation}
-                    onClick={() => handleLogin(id, pwd, validation, navigate, setFail)}
+                <button
+                    className="SignInButton"
+                    disabled={!isFormValid}
+                    onClick={() => handleLogin(id.trim(), pwd, isFormValid, navigate, setFail)}
                 >
                     로그인
                 </button>

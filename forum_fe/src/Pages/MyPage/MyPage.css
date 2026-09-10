@@ -1,0 +1,314 @@
+.MyPageContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    box-sizing: border-box;
+    gap: 24px;
+}
+
+.MyPageWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    font-size: 16px;
+    color: #666;
+}
+
+.MyPageHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #333;
+    padding-bottom: 16px;
+}
+
+.MyPageTitle {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111;
+    margin: 0;
+}
+
+.MyPageBackBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.MyPageBackBtn:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+/* 상단 프로필 카드 */
+.ProfileCard {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.ProfileAvatarWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #e2e8f0;
+    color: #475569;
+    flex-shrink: 0;
+}
+
+.ProfileInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ProfileNameRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.ProfileName {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.ProfileId {
+    font-size: 14px;
+    color: #64748b;
+}
+
+.Badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.Badge--admin {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+}
+
+.Badge--grade {
+    background-color: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+}
+
+.ProfileMetaRow {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.ProfileMetaItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* 통계 카드 그리드 */
+.StatsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.StatCard {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.StatCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.StatIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+}
+
+.StatIconWrapper--post {
+    background-color: #eff6ff;
+    color: #2563eb;
+}
+
+.StatIconWrapper--comment {
+    background-color: #f0fdf4;
+    color: #16a34a;
+}
+
+.StatContent {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.StatLabel {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.StatValue {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* 회원 정보 수정 카드 */
+.EditSectionCard {
+    padding: 24px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.SectionTitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.EditForm {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.FormGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.FormLabel {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.FormInput {
+    height: 46px;
+    padding: 0 14px;
+    font-size: 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.FormInput:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.FormHint {
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.FormHint--error {
+    color: #ef4444;
+}
+
+.FormActions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.SaveButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 22px;
+    background-color: #1e293b;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.SaveButton:hover:not(:disabled) {
+    background-color: #0f172a;
+}
+
+.SaveButton:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* 하단 로그아웃 영역 */
+.MyPageFooter {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 10px;
+}
+
+.LogoutButtonSecondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ef4444;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.LogoutButtonSecondary:hover {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+}

@@ -7,9 +7,15 @@ import './PostDetailPage.css';
 import parse from 'html-react-parser';
 import CommentSection from './CommentSection';
 
+import AttachmentCard from './AttachmentCard';
+import { useToast } from '../../Components/Toast/ToastContext';
+import { useModal } from '../../Components/Modal/ModalContext';
+
 function PostDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const toast = useToast();
+    const { confirm } = useModal();
     const [post, setPost] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -27,7 +33,7 @@ function PostDetailPage() {
                 setPost(data);
             } catch (error) {
                 if (!axios.isCancel(error)) {
-                    alert("게시글을 불러올 수 없습니다.");
+                    toast.error("게시글을 불러올 수 없습니다.");
                     navigate("/");
                 }
             }
@@ -38,22 +44,63 @@ function PostDetailPage() {
         return () => {
             controller.abort();
         };
-    }, [id, navigate]);
+    }, [id, navigate, toast]);
 
     const handleDelete = async () => {
-        if (window.confirm("정말 이 게시글을 삭제하시겠습니까?")) {
+        const isConfirmed = await confirm({
+            title: "게시글 삭제",
+            message: "정말 이 게시글을 삭제하시겠습니까?\n삭제된 게시글은 복구할 수 없습니다.",
+            confirmText: "삭제",
+            cancelText: "취소",
+            isDestructive: true,
+        });
+
+        if (isConfirmed) {
             try {
                 await deletePost(id);
-                alert("삭제되었습니다.");
+                toast.success("게시글이 삭제되었습니다.");
                 navigate("/");
             } catch (error) {
-                alert("삭제에 실패했습니다.");
+                toast.error("게시글 삭제에 실패했습니다.");
             }
         }
     };
 
     const currentUserId = localStorage.getItem("userId");
     const isAuthor = Boolean(isLoggedIn && currentUserId && post && post.author === currentUserId);
+
+    const getNodeText = (node) => {
+        if (!node) return '';
+        if (node.type === 'text') return node.data || '';
+        if (node.children) {
+            return node.children.map(getNodeText).join('');
+        }
+        return '';
+    };
+
+    const parseOptions = {
+        replace: (domNode) => {
+            if (domNode.name === 'a') {
+                const href = domNode.attribs?.href;
+                const className = domNode.attribs?.class || '';
+                const text = getNodeText(domNode);
+                const hasImageChild = domNode.children?.some((child) => child.name === 'img');
+
+                const isAttachment =
+                    !hasImageChild &&
+                    (className.includes('attachment-card') ||
+                        text.includes('📎') ||
+                        domNode.attribs?.['data-filename'] ||
+                        (href && (href.includes('/uploads/') || href.includes('/api/files/download'))));
+
+                if (isAttachment && href) {
+                    const fileName = domNode.attribs?.['data-filename'] || text || '첨부파일';
+                    const fileSize = domNode.attribs?.['data-filesize'];
+                    return <AttachmentCard href={href} fileName={fileName} fileSize={fileSize} />;
+                }
+            }
+        },
+    };
 
     if (!post) {
         return <div className="PostDetailWrapper">로딩 중...</div>;
@@ -76,7 +123,7 @@ function PostDetailPage() {
             </div>
 
             <div className="PostDetailContent">
-                {parse(formatDetailContent(post.content))}
+                {parse(formatDetailContent(post.content), parseOptions)}
             </div>
             <CommentSection
                 postId={id}

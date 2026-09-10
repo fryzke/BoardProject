@@ -1,0 +1,112 @@
+.ToastContainer {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 420px;
+    width: calc(100% - 48px);
+    pointer-events: none;
+}
+
+.ToastItem {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    font-size: 14px;
+    line-height: 1.4;
+    animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: all 0.2s ease;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(40px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+.ToastIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ToastMessage {
+    flex: 1;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.ToastCloseBtn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    margin: -4px -4px -4px 0;
+    color: #94a3b8;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.ToastCloseBtn:hover {
+    color: #475569;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Types */
+.ToastItem--success {
+    border-left: 4px solid #10b981;
+}
+.ToastItem--success .ToastIcon {
+    color: #10b981;
+}
+.ToastItem--success .ToastMessage {
+    color: #064e3b;
+}
+
+.ToastItem--error {
+    border-left: 4px solid #ef4444;
+}
+.ToastItem--error .ToastIcon {
+    color: #ef4444;
+}
+.ToastItem--error .ToastMessage {
+    color: #7f1d1d;
+}
+
+.ToastItem--warning {
+    border-left: 4px solid #f59e0b;
+}
+.ToastItem--warning .ToastIcon {
+    color: #f59e0b;
+}
+.ToastItem--warning .ToastMessage {
+    color: #78350f;
+}
+
+.ToastItem--info {
+    border-left: 4px solid #3b82f6;
+}
+.ToastItem--info .ToastIcon {
+    color: #3b82f6;
+}
+.ToastItem--info .ToastMessage {
+    color: #1e3a8a;
+}

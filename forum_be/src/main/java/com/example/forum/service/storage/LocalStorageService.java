@@ -15,6 +15,10 @@ import com.example.forum.dto.FileRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import java.net.MalformedURLException;
+
 @Service
 @RequiredArgsConstructor 
 @Slf4j
@@ -94,6 +98,26 @@ public class LocalStorageService implements FileStorageServiceImpl {
         } catch (IOException e) {
             log.error("물리 파일 삭제 실패: {} | 원인: {}", filePath, e.getMessage());
             throw new RuntimeException("물리 파일 삭제 실패: " + storedName, e);
+        }
+    }
+
+    @Override
+    public Resource loadFileAsResource(String storedName) {
+        if (storedName == null || storedName.isBlank()) {
+            throw new IllegalArgumentException("파일명이 올바르지 않습니다.");
+        }
+
+        try {
+            Path filePath = Paths.get(uploadDir, storedName).toAbsolutePath().normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+            if (resource.exists() && resource.isReadable()) {
+                return resource;
+            } else {
+                throw new IllegalArgumentException("파일을 찾을 수 없거나 읽을 수 없습니다: " + storedName);
+            }
+        } catch (MalformedURLException e) {
+            log.error("파일 리소스 로드 실패: {}", e.getMessage());
+            throw new RuntimeException("파일 경로 오류: " + storedName, e);
         }
     }
 }

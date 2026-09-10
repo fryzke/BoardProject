@@ -76,3 +76,25 @@
   border-radius: 4px;
   margin: 12px 0;
 }
+
+.tiptap-content .ProseMirror a.attachment-card,
+.tiptap-content .ProseMirror a[data-filename] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin: 4px 0;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #1e293b;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.tiptap-content .ProseMirror a.attachment-card:hover,
+.tiptap-content .ProseMirror a[data-filename]:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+}

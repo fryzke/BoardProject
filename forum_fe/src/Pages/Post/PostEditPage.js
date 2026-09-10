@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Role, Category } from '../../enum';
+import { Role, Category, PostValidation } from '../../enum';
 import { getPost, createPost, updatePost, deleteBatchImages } from '../../api';
 import './PostEditPage.css';
 import TiptapEditor from './TiptapEditor';
+import { useToast } from '../../Components/Toast/ToastContext';
 
 function PostEditPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const toast = useToast();
     const isEditMode = !!id;
 
     const [title, setTitle] = useState("");
@@ -28,7 +30,7 @@ function PostEditPage() {
                 try {
                     const data = await getPost(id, { signal: controller.signal });
                     if (userId !== data.author) {
-                        alert("본인 게시글만 수정할 수 있습니다.");
+                        toast.error("본인 게시글만 수정할 수 있습니다.");
                         navigate("/");
                         return;
                     }
@@ -38,7 +40,7 @@ function PostEditPage() {
                     setIsPinned(Boolean(data.isPinned ?? data.pinned));
                 } catch (error) {
                     if (!axios.isCancel(error)) {
-                        alert("게시글을 불러올 수 없습니다.");
+                        toast.error("게시글을 불러올 수 없습니다.");
                         navigate("/");
                     }
                 } finally {
@@ -53,25 +55,25 @@ function PostEditPage() {
         return () => {
             controller.abort();
         };
-    }, [id, isEditMode, userId, navigate]);
+    }, [id, isEditMode, userId, navigate, toast]);
 
     const handleSubmit = async () => {
-        if (title.trim().length < 2 || title.trim().length > 100) {
-            alert("제목은 2자 이상 100자 이하로 입력해주세요.");
+        if (title.trim().length < PostValidation.MIN_TITLE_LENGTH || title.trim().length > PostValidation.MAX_TITLE_LENGTH) {
+            toast.warning(`제목은 ${PostValidation.MIN_TITLE_LENGTH}자 이상 ${PostValidation.MAX_TITLE_LENGTH}자 이하로 입력해주세요.`);
             return;
         }
-        if (!content.trim() || content.length > 20000) {
-            alert("본문 내용을 입력해주세요 (최대 20,000자).");
+        if (!content.trim() || content.length > PostValidation.MAX_CONTENT_LENGTH) {
+            toast.warning(`본문 내용을 입력해주세요 (최대 ${PostValidation.MAX_CONTENT_LENGTH.toLocaleString()}자).`);
             return;
         }
 
         if (!selectedCategory.trim()) {
-            alert("카테고리를 선택해주세요.");
+            toast.warning("카테고리를 선택해주세요.");
             return;
         }
 
         if (selectedCategory === Category.NOTICE && userRole !== Role.ADMIN) {
-            alert("공지사항은 관리자만 작성할 수 있습니다.");
+            toast.warning("공지사항은 관리자만 작성할 수 있습니다.");
             return;
         }
 
@@ -80,16 +82,16 @@ function PostEditPage() {
         try {
             if (isEditMode) {
                 await updatePost(id, title, selectedCategory, content, finalPinned);
-                alert("게시글이 수정되었습니다.");
+                toast.success("게시글이 수정되었습니다.");
                 navigate(`/post/${id}`);
             } else {
                 await createPost(title, selectedCategory, content, finalPinned);
-                alert("게시글이 등록되었습니다.");
+                toast.success("게시글이 등록되었습니다.");
                 navigate("/");
             }
         } catch (error) {
             const msg = error.response?.data?.message || "처리 중 오류가 발생했습니다.";
-            alert(msg);
+            toast.error(msg);
         }
     };
 

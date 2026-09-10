@@ -65,7 +65,7 @@ public class FileController {
 
     /*
      * PUT /api/files/{fileId} 또는 /api/images/{fileId}
-     * 파일 수정 (새 파일로 교체)
+     * 파일 수정 (새 파일로 교체: 메타데이터 수정 -> 2차 검증 -> 물리 파일 저장)
      */
     @PutMapping("/{fileId}")
     public ResponseEntity<ApiResponse<FileResponseDto>> putFile(
@@ -77,8 +77,7 @@ public class FileController {
             throw new IllegalArgumentException("업로드할 파일이 없습니다.");
         }
 
-        FileRequestDto storedDto = fileStorageService.storeFile(file);
-        FileResponseDto response = fileService.editFile(storedDto, fileId, userId);
+        FileResponseDto response = fileService.replaceFile(file, fileId, userId);
         return ResponseEntity.ok(ApiResponse.success(response, "파일을 성공적으로 수정하였습니다."));
     }
 
@@ -92,6 +91,34 @@ public class FileController {
             @AuthenticationPrincipal String userId) {
         fileService.deleteFile(fileId, userId);
         return ResponseEntity.ok(ApiResponse.success("파일을 성공적으로 삭제하였습니다."));
+    }
+
+    /*
+     * GET /api/files/download/{fileId} 또는 /api/images/download/{fileId}
+     * 파일 다운로드 API (파일 ID 기준)
+     */
+    @GetMapping("/download/{fileId}")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadFile(@PathVariable Long fileId) {
+        FileService.FileDownloadDto downloadDto = fileService.downloadFile(fileId);
+        String encodedFileName = org.springframework.web.util.UriUtils.encode(downloadDto.originalName(), java.nio.charset.StandardCharsets.UTF_8);
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(downloadDto.contentType() != null ? downloadDto.contentType() : org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE))
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
+                .body(downloadDto.resource());
+    }
+
+    /*
+     * GET /api/files/download 또는 /api/images/download
+     * 파일 다운로드 API (storedName 기준)
+     */
+    @GetMapping("/download")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadFileByName(@RequestParam("storedName") String storedName) {
+        FileService.FileDownloadDto downloadDto = fileService.downloadFileByStoredName(storedName);
+        String encodedFileName = org.springframework.web.util.UriUtils.encode(downloadDto.originalName(), java.nio.charset.StandardCharsets.UTF_8);
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(downloadDto.contentType() != null ? downloadDto.contentType() : org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE))
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
+                .body(downloadDto.resource());
     }
 
     /*
