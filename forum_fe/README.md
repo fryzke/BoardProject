@@ -1,70 +1,77 @@
-# Getting Started with Create React App
+# 🎨 Forum Board Frontend (`forum_fe`)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React 19 기반의 포럼/게시판 웹 프론트엔드 애플리케이션입니다.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 📌 주요 기술 스택 (Tech Stack)
 
-### `npm start`
+- **Framework & Runtime**: React 19, React Router v7
+- **Editor**: TipTap Rich Text Editor (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-image`)
+- **HTTP Client**: Axios (인터셉터 기반 자동 토큰 재발급 및 큐 동기화)
+- **UI & Icons**: Lucide React, Custom CSS Variables (다크/라이트 모던 디자인)
+- **State & Context**: Context API
+  - `AuthContext`: 사용자 로그인 상태 및 토큰 관리
+  - `ToastContext`: 전역 토스트 알림 시스템
+  - `ModalContext`: 전역 커스텀 확인/알림 모달 시스템
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🏛️ 주요 기능 및 컴포넌트 구조
 
-### `npm test`
+```text
+src/
+├── Components/
+│   ├── Header/          # 공통 상단 네비게이션 바
+│   ├── Modal/           # ConfirmModal 및 모달 전역 컨텍스트
+│   └── Toast/           # ToastContainer, ToastItem 및 토스트 컨텍스트
+├── Pages/
+│   ├── Forum/           # 게시글 목록, 검색, 카테고리 필터링, 페이지네이션
+│   ├── Post/            # 게시글 상세(PostDetailPage), 에디터(TiptapEditor), 댓글(CommentSection), 첨부파일(AttachmentCard)
+│   ├── MyPage/          # 회원정보 조회, 프로필/비밀번호 수정, 활동 통계
+│   ├── SignIn/          # 로그인 페이지
+│   └── SignUp/          # 회원가입 페이지
+├── api.js               # Axios 인스턴스, Refresh Token 재발급 인터셉터 및 API 메서드 모음
+├── enum.js              # 시스템 공통 상수 (카테고리, 에러코드, 검증 규칙)
+└── utils.js             # 날짜 포맷, 파일 크기 포맷, 텍스트 자르기 유틸 함수
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 1. TipTap 리치 텍스트 에디터
+- 텍스트 서식(Bold, Italic, Heading, BulletList 등) 지원
+- 에디터 내 이미지 업로드 및 일반 파일 첨부 지원
 
-### `npm run build`
+### 2. 토큰 자동 재발급 (Silent Refresh)
+- API 요청 중 Access Token 만료(401) 감지 시, 대기열(Queue)을 형성하여 토큰을 재발급받고 실패한 요청을 자동으로 재전송
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 3. 반응형 UI & 커스텀 피드백
+- 기본 브라우저 `alert`/`confirm` 대신 커스텀 토스트 알림 및 모달 팝업 적용
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## ⚙️ 환경 변수 설정 (Environment Variables)
 
-### `npm run eject`
+`forum_fe/.env.example` 파일을 복사하여 `.env`를 생성합니다.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```env
+REACT_APP_API_BASE_URL=http://localhost:8080/api
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 🚀 실행 방법 (Getting Started)
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### 1. 패키지 설치
+```bash
+npm install
+```
 
-## Learn More
+### 2. 개발 서버 구동
+```bash
+npm start
+```
+> 애플리케이션은 기본적으로 `http://localhost:3000`에서 실행됩니다.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### 3. 프로덕션 빌드
+```bash
+npm run build
+```

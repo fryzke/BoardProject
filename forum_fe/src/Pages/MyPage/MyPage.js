@@ -16,8 +16,8 @@ export default function MyPage() {
     const [userInfo, setUserInfo] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // 수정 폼 상태
     const [userName, setUserName] = useState('');
+    const [currentPassword, setCurrentPassword] = useState('');
     const [password, setPassword] = useState('');
     const [passwordConfirm, setPasswordConfirm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,11 +43,17 @@ export default function MyPage() {
 
     // 유효성 검사
     const isNameValid = userName.trim().length >= AuthValidation.MIN_NAME_LENGTH && userName.trim().length <= AuthValidation.MAX_NAME_LENGTH;
+    const isCurrentPasswordEntered = currentPassword.trim().length > 0;
     const isPasswordValid = !password || AuthValidation.PASSWORD_REGEX.test(password);
     const isPasswordMatch = !password || (password === passwordConfirm);
 
     const handleUpdate = async (e) => {
         e.preventDefault();
+
+        if (!isCurrentPasswordEntered) {
+            toast.warning('현재 비밀번호(기존 비밀번호)를 입력해주세요.');
+            return;
+        }
 
         if (!isNameValid) {
             toast.warning(`닉네임은 ${AuthValidation.MIN_NAME_LENGTH}자 이상 ${AuthValidation.MAX_NAME_LENGTH}자 이하로 입력해주세요.`);
@@ -69,6 +75,7 @@ export default function MyPage() {
         try {
             const updatePayload = {
                 userName: userName.trim(),
+                currentPassword: currentPassword.trim(),
             };
             if (password.trim()) {
                 updatePayload.userPassword = password.trim();
@@ -78,6 +85,7 @@ export default function MyPage() {
             if (res.success) {
                 toast.success('회원 정보가 성공적으로 수정되었습니다.');
                 localStorage.setItem('userName', userName.trim());
+                setCurrentPassword('');
                 setPassword('');
                 setPasswordConfirm('');
                 // 최신 정보 갱신
@@ -207,6 +215,22 @@ export default function MyPage() {
                     </div>
 
                     <div className="FormGroup">
+                        <label className="FormLabel" htmlFor="mypage-current-password">현재 비밀번호 <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input
+                            id="mypage-current-password"
+                            type="password"
+                            className="FormInput"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder="회원정보 수정을 위해 현재 비밀번호를 입력하세요"
+                            autoComplete="current-password"
+                        />
+                        {!isCurrentPasswordEntered && currentPassword.length === 0 && (
+                            <span className="FormHint">정보 수정을 위해 기존 비밀번호 입력이 필요합니다.</span>
+                        )}
+                    </div>
+
+                    <div className="FormGroup">
                         <label className="FormLabel" htmlFor="mypage-password">새 비밀번호</label>
                         <input
                             id="mypage-password"
@@ -215,6 +239,7 @@ export default function MyPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="변경할 새 비밀번호 (변경 시에만 입력)"
+                            autoComplete="new-password"
                         />
                         {password && !isPasswordValid && (
                             <span className="FormHint FormHint--error">영문, 숫자, 특수문자(+=%_!@#$^&*?) 포함 8자 이상</span>
@@ -231,6 +256,7 @@ export default function MyPage() {
                                 value={passwordConfirm}
                                 onChange={(e) => setPasswordConfirm(e.target.value)}
                                 placeholder="비밀번호를 한 번 더 입력해주세요"
+                                autoComplete="new-password"
                             />
                             {!isPasswordMatch && passwordConfirm.length > 0 && (
                                 <span className="FormHint FormHint--error">비밀번호가 일치하지 않습니다.</span>
@@ -242,7 +268,7 @@ export default function MyPage() {
                         <button
                             type="submit"
                             className="SaveButton"
-                            disabled={isSubmitting || !isNameValid || (!isPasswordValid && Boolean(password)) || (!isPasswordMatch && Boolean(password))}
+                            disabled={isSubmitting || !isNameValid || !isCurrentPasswordEntered || (!isPasswordValid && Boolean(password)) || (!isPasswordMatch && Boolean(password))}
                         >
                             <Save size={16} />
                             <span>{isSubmitting ? '저장 중...' : '변경사항 저장'}</span>

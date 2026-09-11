@@ -25,7 +25,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/comments")
+@RequestMapping("/api/comments/{postId}")
 @RequiredArgsConstructor
 public class CommentController {
     private final CommentService commentService;
@@ -35,7 +35,7 @@ public class CommentController {
      * POST /api/comments/{postId}
      * 댓글 작성
      */
-    @PostMapping("/{postId}")
+    @PostMapping
     public ResponseEntity<ApiResponse<CommentResponseDto>> createComment(
             @AuthenticationPrincipal String userId,
             @PathVariable Long postId,
@@ -49,7 +49,7 @@ public class CommentController {
      * GET /api/comments/{postId}
      * 댓글 불러오기
      */
-    @GetMapping("/{postId}")
+    @GetMapping
     public ResponseEntity<ApiResponse<List<CommentResponseDto>>> getComments(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit,
@@ -62,7 +62,7 @@ public class CommentController {
      * PUT /api/comments/{postId}/{commentId}
      * 댓글 수정하기
      */
-    @PutMapping("/{postId}/{commentId}")
+    @PutMapping("/{commentId}")
     public ResponseEntity<ApiResponse<CommentResponseDto>> putComments(
             @PathVariable Long postId,
             @PathVariable Long commentId,
@@ -76,12 +76,13 @@ public class CommentController {
      * DELETE /api/comments/{postId}/{commentId}
      * 댓글 삭제하기
      */
-    @DeleteMapping("/{postId}/{commentId}")
+    @DeleteMapping("/{commentId}")
     public ResponseEntity<ApiResponse<Void>> deleteComment(
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @AuthenticationPrincipal String userId) {
         commentService.deleteComment(postId, commentId, userId);
+        userService.updateGrade(userId);
         return ResponseEntity.ok(ApiResponse.success("댓글을 성공적으로 삭제하였습니다."));
     }
 }

@@ -196,13 +196,13 @@ export default function TiptapEditor({ content, onChange, postId, setFileIdList 
         const fileSize = file.size;
 
         if (fileSize > FileMaximum.MAX_SIZE) {
-            toast.warning("파일은 최대 20MB까지 업로드 가능합니다.");
+            toast.warning(`파일은 최대 ${FileMaximum.MAX_SIZE / (1024 * 1024)}MB까지 업로드 가능합니다.`);
             event.target.value = '';
             return;
         }
 
         if (totalSize + fileSize > FileMaximum.TOTAL_MAX_SIZE) {
-            toast.warning("파일은 총합 100MB까지 업로드할 수 있습니다.");
+            toast.warning(`파일은 총합 ${FileMaximum.TOTAL_MAX_SIZE / (1024 * 1024)}MB까지 업로드할 수 있습니다.`);
             event.target.value = '';
             return;
         }

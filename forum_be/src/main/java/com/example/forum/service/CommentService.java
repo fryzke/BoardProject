@@ -54,7 +54,7 @@ public class CommentService {
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부모 댓글입니다."));
         }
 
-        commentValidator.validateCreate(post, parentComment, postId);
+        commentValidator.validateCreate(post, parentComment, postId, dto.getContent());
 
         Comment comment = Comment.builder()
                 .content(dto.getContent().trim())
@@ -129,7 +129,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
 
-        commentValidator.validateUpdate(comment, postId, loginUserId);
+        commentValidator.validateUpdate(comment, postId, loginUserId, dto.getContent());
 
         comment.update(dto.getContent().trim());
 

@@ -18,10 +18,10 @@ public class FileValidator {
     @Value("${file.max-count:10}")
     private int maxFiles;
 
-    @Value("${file.max-single-size:20971520}")
+    @Value("${file.max-single-size:2097152}")
     private Long maxSize;
 
-    @Value("${file.max-total-size:104857600}")
+    @Value("${file.max-total-size:10485760}")
     private Long totalMaxSize;
 
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(
@@ -80,7 +80,7 @@ public class FileValidator {
         }
 
         if (currentTotalSize > totalMaxSize) {
-            throw new IllegalArgumentException("전체 파일 총용량이 제한(100MB)을 초과하였습니다.");
+            throw new IllegalArgumentException("전체 파일 총용량이 제한(" + (totalMaxSize / (1024 * 1024)) + "MB)을 초과하였습니다.");
         }
     }
 }

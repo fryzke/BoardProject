@@ -21,8 +21,8 @@ export const SortType = {
 Object.freeze(SortType);
 
 export const FileMaximum = {
-    MAX_SIZE: 20 * 1024 * 1024,
-    TOTAL_MAX_SIZE: 100 * 1024 * 1024,
+    MAX_SIZE: 2 * 1024 * 1024,
+    TOTAL_MAX_SIZE: 10 * 1024 * 1024,
     TOTAL_IMAGE_NUMBER: 10,
 };
 Object.freeze(FileMaximum);

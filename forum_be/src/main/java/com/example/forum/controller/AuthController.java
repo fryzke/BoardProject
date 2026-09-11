@@ -30,6 +30,12 @@ public class AuthController {
     private final UserService userService;
     private final JwtProvider jwtProvider;
 
+    @org.springframework.beans.factory.annotation.Value("${cookie.secure:false}")
+    private boolean cookieSecure;
+
+    @org.springframework.beans.factory.annotation.Value("${cookie.same-site:Lax}")
+    private String cookieSameSite;
+
     /**
      * 회원가입 API
      * POST /api/auth/signup
@@ -49,10 +55,10 @@ public class AuthController {
         JwtTokenDto token = authService.login(dto);
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
                 .httpOnly(true)
-                .secure(false) // Https일시에는 true로 설정
+                .secure(cookieSecure)
                 .path("/")
                 .maxAge(7 * 24 * 60 * 60)
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .build();
 
         User user = authService.getUser(dto.getUserId());
@@ -82,15 +88,23 @@ public class AuthController {
      * POST /api/auth/logout
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
-        authService.logOut(refreshToken);
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String bearerToken,
+            @CookieValue(name = "refreshToken", required = false) String refreshToken) {
+
+        String accessToken = null;
+        if (org.springframework.util.StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            accessToken = bearerToken.substring(7);
+        }
+
+        authService.logOut(accessToken, refreshToken);
 
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(false) // HTTPS 적용 시 true
+                .secure(cookieSecure)
                 .path("/")
                 .maxAge(0) // 즉시 만료
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .build();
 
         return ResponseEntity.ok()
@@ -111,10 +125,10 @@ public class AuthController {
 
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
                 .httpOnly(true)
-                .secure(false) // Https일시에는 true로 설정
+                .secure(cookieSecure)
                 .path("/")
                 .maxAge(7 * 24 * 60 * 60)
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .build();
 
         ReissueResponseDto response = ReissueResponseDto.builder()

@@ -12,10 +12,15 @@ public class CommentValidator {
     @Value("${comment.max-depth:9}")
     private int maxCommentDepth; // 부모의 최대 depth (자식 포함 최대 10단계)
 
+    @Value("${comment.max-content-length:400}")
+    private int maxContentLength;
+
     /**
      * 댓글 생성 비즈니스 검증
      */
-    public void validateCreate(Post post, Comment parentComment, Long postId) {
+    public void validateCreate(Post post, Comment parentComment, Long postId, String content) {
+        validateContent(content);
+
         if (parentComment != null) {
             // 다른 게시글의 댓글에 답글 작성 방지
             if (!parentComment.getPost().getId().equals(postId)) {
@@ -29,14 +34,29 @@ public class CommentValidator {
         }
     }
 
+    public void validateCreate(Post post, Comment parentComment, Long postId) {
+        validateCreate(post, parentComment, postId, null);
+    }
+
     /**
      * 댓글 수정 비즈니스 검증
      */
-    public void validateUpdate(Comment comment, Long postId, String loginUserId) {
+    public void validateUpdate(Comment comment, Long postId, String loginUserId, String content) {
         validateCommon(comment, postId, loginUserId);
+        validateContent(content);
 
         if (comment.isDeleted()) {
             throw new IllegalArgumentException("삭제된 댓글은 수정할 수 없습니다.");
+        }
+    }
+
+    public void validateUpdate(Comment comment, Long postId, String loginUserId) {
+        validateUpdate(comment, postId, loginUserId, null);
+    }
+
+    public void validateContent(String content) {
+        if (content != null && content.trim().length() > maxContentLength) {
+            throw new IllegalArgumentException(String.format("댓글은 최대 %d자 이하로 입력해주세요.", maxContentLength));
         }
     }
 

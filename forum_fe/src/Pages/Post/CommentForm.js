@@ -46,6 +46,7 @@ function CommentForm({ postId, comment, parentId, onSuccess, onCancel }) {
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="댓글을 입력해주세요..."
                     rows={3}
+                    maxLength={CommentValidation.MAX_CONTENT_LENGTH}
                 />
             </div>
             <div className="comment-form-actions">

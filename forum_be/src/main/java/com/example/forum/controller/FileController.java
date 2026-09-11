@@ -15,11 +15,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.forum.dto.FileRequestDto;
 import com.example.forum.dto.FileResponseDto;
 import com.example.forum.dto.common.ApiResponse;
 import com.example.forum.service.FileService;
-import com.example.forum.service.storage.FileStorageServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 public class FileController {
 
     private final FileService fileService;
-    private final FileStorageServiceImpl fileStorageService;
 
     /*
      * POST /api/files/upload 또는 /api/images/upload

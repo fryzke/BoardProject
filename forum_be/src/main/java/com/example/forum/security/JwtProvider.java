@@ -18,12 +18,15 @@ public class JwtProvider {
 
     private final Key key;
     private final long expiration;
+    private final long refreshExpiration;
 
     public JwtProvider(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration}") long expiration) {
+            @Value("${jwt.expiration}") long expiration,
+            @Value("${jwt.refresh-expiration}") long refreshExpiration) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.expiration = expiration;
+        this.refreshExpiration = refreshExpiration;
     }
 
     /**
@@ -37,7 +40,7 @@ public class JwtProvider {
 
         Date now = new Date();
         Date accessExpiryDate = new Date(now.getTime() + expiration);
-        Date refreshExpiryDate = new Date(now.getTime() + (expiration * 168));
+        Date refreshExpiryDate = new Date(now.getTime() + refreshExpiration);
         String accessToken = Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("auth", authorities)
@@ -58,6 +61,23 @@ public class JwtProvider {
                 .refreshToken(refreshToken)
                 .accessTokenExpiresIn(accessExpiryDate.getTime())
                 .build();
+    }
+
+    public long getRefreshExpiration() {
+        return refreshExpiration;
+    }
+
+    /**
+     * 토큰의 남은 유효시간(ms) 계산
+     */
+    public long getRemainingExpiration(String token) {
+        try {
+            Date expirationDate = parseClaims(token).getExpiration();
+            long now = new Date().getTime();
+            return Math.max(0, expirationDate.getTime() - now);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     /**

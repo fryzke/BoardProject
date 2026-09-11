@@ -23,6 +23,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final com.example.forum.validator.AuthValidator authValidator;
 
     /*
      * 등급 갱신
@@ -37,10 +38,12 @@ public class UserService {
         Long postCount = postRepository.countByAuthorId(user.getId());
         Long commentCount = commentRepository.countByAuthorId(user.getId());
 
-        if (postCount >= Grade.SILVER.getMinPosts() && commentCount >= Grade.SILVER.getMinComments()) {
-            user.setGrade(Grade.SILVER);
-        } else if (postCount >= Grade.GOLD.getMinPosts() && commentCount >= Grade.GOLD.getMinComments()) {
+        if (postCount >= Grade.GOLD.getMinPosts() && commentCount >= Grade.GOLD.getMinComments()) {
             user.setGrade(Grade.GOLD);
+        } else if (postCount >= Grade.SILVER.getMinPosts() && commentCount >= Grade.SILVER.getMinComments()) {
+            user.setGrade(Grade.SILVER);
+        } else {
+            user.setGrade(Grade.BRONZE);
         }
 
         userRepository.save(user);
@@ -72,6 +75,12 @@ public class UserService {
     public void updateUserInfo(String userId, UserRequestDto dto) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (dto.getCurrentPassword() == null || !passwordEncoder.matches(dto.getCurrentPassword(), user.getUserPassword())) {
+            throw new IllegalArgumentException("기존 비밀번호가 일치하지 않습니다.");
+        }
+
+        authValidator.validateUserName(dto.getUserName());
 
         String encodedPassword = null;
         if (dto.getUserPassword() != null && !dto.getUserPassword().isBlank()) {

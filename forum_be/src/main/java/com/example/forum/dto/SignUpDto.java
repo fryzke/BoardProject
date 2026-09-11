@@ -1,8 +1,10 @@
 package com.example.forum.dto;
 
+import com.example.forum.validator.annotation.ValidUserId;
+import com.example.forum.validator.annotation.ValidUserName;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +13,7 @@ import lombok.Setter;
 public class SignUpDto {
 
     @NotBlank(message = "아이디를 입력해주세요.")
-    @Size(min = 4, max = 16, message = "아이디는 4자 이상 16자 이하로 입력해주세요.")
+    @ValidUserId
     private String userId;
 
     @NotBlank(message = "비밀번호를 입력해주세요.")
@@ -22,7 +24,7 @@ public class SignUpDto {
     private String userPassword;
 
     @NotBlank(message = "닉네임을 입력해주세요.")
-    @Size(min = 2, max = 20, message = "닉네임은 2자 이상 20자 이하로 입력해주세요.")
+    @ValidUserName
     private String userName;
 }
 

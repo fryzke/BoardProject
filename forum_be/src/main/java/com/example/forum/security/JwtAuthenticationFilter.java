@@ -19,7 +19,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final String BLACKLIST_PREFIX = "blacklist:";
+
     private final JwtProvider jwtProvider;
+    private final org.springframework.data.redis.core.StringRedisTemplate stringRedisTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -29,17 +32,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
 
         if (token != null && jwtProvider.validateToken(token)) {
-            String userId = jwtProvider.getUserIdFromToken(token);
-            String role = jwtProvider.getRoleFromToken(token);
+            // Redis 블랙리스트에 등록된 토큰인지 확인
+            String isBlacklisted = stringRedisTemplate.opsForValue().get(BLACKLIST_PREFIX + token);
+            if (isBlacklisted == null) {
+                String userId = jwtProvider.getUserIdFromToken(token);
+                String role = jwtProvider.getRoleFromToken(token);
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userId,
-                            null,
-                            List.of(new SimpleGrantedAuthority(role))
-                    );
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userId,
+                                null,
+                                List.of(new SimpleGrantedAuthority(role))
+                        );
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
 
         filterChain.doFilter(request, response);

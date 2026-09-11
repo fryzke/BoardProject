@@ -11,6 +11,20 @@ const api = axios.create({
     withCredentials: true,
 });
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
 // 요청 시 JWT 토큰을 자동으로 헤더에 추가하는 인터셉터
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('accessToken');
@@ -24,26 +38,49 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
-        // 401 에러이고 아직 재시도하지 않은 요청인 경우
-        if (error.response?.status === 401 && !originalRequest._retry) {
+
+        // 401 에러이고 재발급 요청 자체가 아닌 경우
+        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/reissue')) {
+            if (isRefreshing) {
+                // 다른 요청이 이미 재발급을 진행 중이면 대기 큐에 저장
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then((token) => {
+                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        return api(originalRequest);
+                    })
+                    .catch((err) => Promise.reject(err));
+            }
+
             originalRequest._retry = true;
+            isRefreshing = true;
+
             try {
-                const res = await api.post('/auth/reissue');
+                const res = await axios.post(`${API_BASE_URL}/auth/reissue`, {}, { withCredentials: true });
                 if (res.data?.success && res.data?.accessToken) {
                     const newAccessToken = res.data.accessToken;
                     localStorage.setItem('accessToken', newAccessToken);
                     api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
                     originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-                    return api(originalRequest); // api 인스턴스로 재요청
+
+                    processQueue(null, newAccessToken);
+                    return api(originalRequest);
+                } else {
+                    throw new Error('토큰 재발급 응답이 올바르지 않습니다.');
                 }
             } catch (reissueError) {
-                // Refresh Token도 만료되었거나 재발급 실패 시
+                processQueue(reissueError, null);
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('userId');
                 localStorage.removeItem('userName');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userGrade');
                 showToast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
                 window.location.replace('/sign-in');
                 return Promise.reject(reissueError);
+            } finally {
+                isRefreshing = false;
             }
         }
         return Promise.reject(error);

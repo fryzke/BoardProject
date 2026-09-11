@@ -110,6 +110,7 @@ public class PostController {
             @PathVariable Long id,
             @AuthenticationPrincipal String loginId) {
         postService.deletePost(id, loginId);
+        userService.updateGrade(loginId);
         return ResponseEntity.ok(ApiResponse.success("게시글을 성공적으로 삭제하였습니다."));
     }
 }
