@@ -112,7 +112,6 @@ export default function MyPage() {
 
         if (isConfirmed) {
             try {
-                localStorage.removeItem('accessToken');
                 localStorage.removeItem('userId');
                 localStorage.removeItem('userName');
                 localStorage.removeItem('userGrade');

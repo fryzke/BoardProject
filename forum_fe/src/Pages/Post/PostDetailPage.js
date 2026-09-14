@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatDate, formatDetailContent } from '../../utils';
-import { getPost, deletePost } from '../../api';
+import { getPost, deletePost, getAccessToken, reissueToken } from '../../api';
 import './PostDetailPage.css';
 import parse from 'html-react-parser';
 import CommentSection from './CommentSection';
-
 import AttachmentCard from './AttachmentCard';
+import { Paperclip } from 'lucide-react';
 import { useToast } from '../../Components/Toast/ToastContext';
 import { useModal } from '../../Components/Modal/ModalContext';
 
@@ -20,10 +20,24 @@ function PostDetailPage() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-            setIsLoggedIn(true);
-        }
+        const initAuth = async () => {
+            if (getAccessToken()) {
+                setIsLoggedIn(true);
+                return;
+            }
+            if (localStorage.getItem("userId")) {
+                try {
+                    const res = await reissueToken();
+                    if (res?.success && res?.accessToken) {
+                        setIsLoggedIn(true);
+                    }
+                } catch {
+                    // 미로그인 상태
+                }
+            }
+        };
+
+        initAuth();
 
         const controller = new AbortController();
 
@@ -78,6 +92,7 @@ function PostDetailPage() {
         return '';
     };
 
+    // 본문 내 인라인 이미지 및 레거시 첨부파일 링크 호환 파싱
     const parseOptions = {
         replace: (domNode) => {
             if (domNode.name === 'a') {
@@ -90,8 +105,7 @@ function PostDetailPage() {
                     !hasImageChild &&
                     (className.includes('attachment-card') ||
                         text.includes('📎') ||
-                        domNode.attribs?.['data-filename'] ||
-                        (href && (href.includes('/uploads/') || href.includes('/api/files/download'))));
+                        domNode.attribs?.['data-filename']);
 
                 if (isAttachment && href) {
                     const fileName = domNode.attribs?.['data-filename'] || text || '첨부파일';
@@ -106,6 +120,8 @@ function PostDetailPage() {
         return <div className="PostDetailWrapper">로딩 중...</div>;
     }
 
+    const hasAttachments = post.files && post.files.length > 0;
+
     return (
         <div className="PostDetailContainer">
             <div className="PostDetailHeader">
@@ -119,17 +135,45 @@ function PostDetailPage() {
                     <span className="Author">작성자: {post.author || '-'}</span>
                     <span className="Date">작성일: {formatDate(post.createdAt || post.date)}</span>
                     <span className="Views">조회수: {post.viewCount ?? 0}</span>
+                    {hasAttachments && (
+                        <span className="DetailAttachmentBadge">
+                            <Paperclip size={14} />
+                            첨부파일 {post.files.length}개
+                        </span>
+                    )}
                 </div>
             </div>
 
             <div className="PostDetailContent">
                 {parse(formatDetailContent(post.content), parseOptions)}
             </div>
+
+            {hasAttachments && (
+                <div className="PostAttachmentSection">
+                    <div className="PostAttachmentHeader">
+                        <Paperclip size={16} />
+                        <span>첨부파일</span>
+                        <span className="PostAttachmentCount">({post.files.length}개)</span>
+                    </div>
+                    <div className="PostAttachmentList">
+                        {post.files.map((file) => (
+                            <AttachmentCard
+                                key={file.id || file.accessUrl}
+                                href={file.accessUrl}
+                                fileName={file.originalName}
+                                fileSize={file.fileSize}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <CommentSection
                 postId={id}
                 isLoggedIn={isLoggedIn}
                 currentUserId={currentUserId}
             />
+
             <div className="PostDetailActions">
                 <button className="ActionBtn BackBtn" onClick={() => navigate("/")}>목록으로</button>
 

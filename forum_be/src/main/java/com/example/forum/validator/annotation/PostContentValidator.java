@@ -5,6 +5,8 @@ import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.example.forum.utils.HtmlUtils;
+
 @Component
 public class PostContentValidator implements ConstraintValidator<ValidPostContent, String> {
 
@@ -19,7 +21,8 @@ public class PostContentValidator implements ConstraintValidator<ValidPostConten
         if (value == null) {
             return true;
         }
-        int length = value.trim().length();
+        String plainText = HtmlUtils.removeTag(value);
+        int length = plainText.trim().length();
         if (length < minLength || length > maxLength) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(

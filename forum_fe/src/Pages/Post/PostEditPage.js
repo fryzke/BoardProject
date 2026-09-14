@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Role, Category, PostValidation } from '../../enum';
-import { getPost, createPost, updatePost, deleteBatchImages } from '../../api';
+import { getPost, createPost, updatePost, deleteBatchFiles } from '../../api';
 import './PostEditPage.css';
 import TiptapEditor from './TiptapEditor';
+import AttachedFileList from './AttachedFileList';
 import { useToast } from '../../Components/Toast/ToastContext';
 
 function PostEditPage() {
@@ -15,12 +16,18 @@ function PostEditPage() {
 
     const [title, setTitle] = useState("");
     const [selectedCategory, setSelectedCategory] = useState(Category.TALK);
+    const [attachedFiles, setAttachedFiles] = useState([]);
     const [fileIdList, setFileIdList] = useState([]);
     const [content, setContent] = useState("");
+    const [plainText, setPlainText] = useState("");
     const [isPinned, setIsPinned] = useState(false);
     const [loading, setLoading] = useState(isEditMode);
     const userId = localStorage.getItem("userId");
     const userRole = localStorage.getItem("userRole");
+
+    const isTitleValid = title.trim().length >= PostValidation.MIN_TITLE_LENGTH && title.trim().length <= PostValidation.MAX_TITLE_LENGTH;
+    const isContentValid = plainText.length > 0 && plainText.length <= PostValidation.MAX_CONTENT_LENGTH;
+    const isValid = isTitleValid && isContentValid;
 
     useEffect(() => {
         const controller = new AbortController();
@@ -38,6 +45,10 @@ function PostEditPage() {
                     setContent(data.content);
                     if (data.category) setSelectedCategory(data.category);
                     setIsPinned(Boolean(data.isPinned ?? data.pinned));
+                    if (data.files && Array.isArray(data.files)) {
+                        setAttachedFiles(data.files);
+                        setFileIdList(data.files.map(f => f.id));
+                    }
                 } catch (error) {
                     if (!axios.isCancel(error)) {
                         toast.error("게시글을 불러올 수 없습니다.");
@@ -57,12 +68,21 @@ function PostEditPage() {
         };
     }, [id, isEditMode, userId, navigate, toast]);
 
+    const handleRemoveFile = (fileToRemove, index) => {
+        setAttachedFiles(prev => prev.filter((_, idx) => idx !== index));
+        if (fileToRemove.id) {
+            setFileIdList(prev => prev.filter(fileId => fileId !== fileToRemove.id));
+        }
+        toast.info(`${fileToRemove.originalName || fileToRemove.name || '파일'}이 첨부 목록에서 제거되었습니다.`);
+    };
+
     const handleSubmit = async () => {
         if (title.trim().length < PostValidation.MIN_TITLE_LENGTH || title.trim().length > PostValidation.MAX_TITLE_LENGTH) {
             toast.warning(`제목은 ${PostValidation.MIN_TITLE_LENGTH}자 이상 ${PostValidation.MAX_TITLE_LENGTH}자 이하로 입력해주세요.`);
             return;
         }
-        if (!content.trim() || content.length > PostValidation.MAX_CONTENT_LENGTH) {
+
+        if (!plainText.trim() || plainText.length > PostValidation.MAX_CONTENT_LENGTH) {
             toast.warning(`본문 내용을 입력해주세요 (최대 ${PostValidation.MAX_CONTENT_LENGTH.toLocaleString()}자).`);
             return;
         }
@@ -81,11 +101,11 @@ function PostEditPage() {
 
         try {
             if (isEditMode) {
-                await updatePost(id, title, selectedCategory, content, finalPinned);
+                await updatePost(id, title, selectedCategory, content, finalPinned, fileIdList);
                 toast.success("게시글이 수정되었습니다.");
                 navigate(`/post/${id}`);
             } else {
-                await createPost(title, selectedCategory, content, finalPinned);
+                await createPost(title, selectedCategory, content, finalPinned, fileIdList);
                 toast.success("게시글이 등록되었습니다.");
                 navigate("/");
             }
@@ -98,7 +118,7 @@ function PostEditPage() {
     const handleCancel = async () => {
         if (fileIdList.length > 0) {
             try {
-                await deleteBatchImages(fileIdList);
+                await deleteBatchFiles(fileIdList);
             } catch (error) {
                 console.warn("취소 시 이미지 즉시 삭제 실패 (추후 스케줄러가 자동 정리함):", error);
             }
@@ -152,16 +172,26 @@ function PostEditPage() {
 
                 <TiptapEditor
                     className="PostEditContentInput"
-                    onChange={setContent}
+                    onChange={(html, text) => {
+                        setContent(html);
+                        setPlainText(text);
+                    }}
                     content={content}
                     postId={id ? Number(id) : null}
+                    attachedFiles={attachedFiles}
+                    setAttachedFiles={setAttachedFiles}
                     setFileIdList={setFileIdList}
+                />
+
+                <AttachedFileList
+                    files={attachedFiles}
+                    onRemoveFile={handleRemoveFile}
                 />
             </div>
 
             <div className="PostEditActions">
                 <button className="CancelBtn" onClick={handleCancel}>취소</button>
-                <button className="SubmitBtn" onClick={handleSubmit}>
+                <button className="SubmitBtn" disabled={!isValid} onClick={handleSubmit}>
                     {isEditMode ? "수정 완료" : "등록하기"}
                 </button>
             </div>
@@ -170,3 +200,4 @@ function PostEditPage() {
 }
 
 export default PostEditPage;
+

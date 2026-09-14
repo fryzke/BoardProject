@@ -1,0 +1,110 @@
+.AttachedFileListContainer {
+    width: 100%;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 18px;
+    box-sizing: border-box;
+    margin-top: 8px;
+}
+
+.AttachedFileListHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 10px;
+}
+
+.AttachedFileListTitle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #1e293b;
+}
+
+.AttachedFileCount {
+    font-size: 13px;
+    font-weight: normal;
+    color: #64748b;
+}
+
+.AttachedFileTotalSize {
+    font-size: 13px;
+    font-weight: normal;
+    color: #64748b;
+}
+
+.AttachedFileListItems {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.AttachedFileItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.AttachedFileItem:hover {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+}
+
+.AttachedFileItemLeft {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+.AttachedFileItemIcon {
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.AttachedFileItemName {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.AttachedFileItemSize {
+    font-size: 13px;
+    color: #94a3b8;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.AttachedFileItemDeleteBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 4px;
+    margin-left: 8px;
+    border-radius: 4px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.AttachedFileItemDeleteBtn:hover {
+    color: #ef4444;
+    background-color: #fee2e2;
+}

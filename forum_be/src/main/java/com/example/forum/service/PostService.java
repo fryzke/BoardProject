@@ -88,7 +88,8 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물입니다."));
 
-        return new PostResponseDto(post);
+        List<File> files = fileRepository.findAllByPostId(id);
+        return new PostResponseDto(post, files);
     }
 
     // 목록 조회
@@ -140,10 +141,12 @@ public class PostService {
         // 새로 추가된 작성자의 미연결 파일 연결
         fileService.deleteUnlinkedFile(post, dto);
 
-        // 본문에서 제거된 기존 파일 Soft Delete 및 물리 파일 삭제 이벤트 발행
+        // 본문 및 첨부파일 목록에서 제거된 기존 파일 Soft Delete 및 물리 파일 삭제 이벤트 발행
         List<File> savedFiles = fileRepository.findAllByPostId(id);
         for (File file : savedFiles) {
-            if (!dto.getContent().contains(file.getAccessUrl())) {
+            boolean inContent = dto.getContent() != null && dto.getContent().contains(file.getAccessUrl());
+            boolean inIdList = dto.getFileIdList() != null && dto.getFileIdList().contains(file.getId());
+            if (!inContent && !inIdList) {
                 fileRepository.delete(file);
                 eventPublisher.publishEvent(new FileDeleteEvent(file.getStoredName()));
             }

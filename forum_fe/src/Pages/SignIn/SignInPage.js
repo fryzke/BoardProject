@@ -1,18 +1,17 @@
 import "./SignInPage.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../../api";
+import { loginUser, getAccessToken, reissueToken } from "../../api";
 
 async function handleLogin(id, pwd, valid, navigate, setFail) {
-
     if (valid) {
         try {
             const result = await loginUser(id, pwd);
             if (result.success) {
-                localStorage.setItem("accessToken", result.accessToken)
+                // Access Token은 loginUser 내부에서 메모리에 저장됨
                 localStorage.setItem("userId", id);
                 localStorage.setItem("userRole", result.userRole);
-                localStorage.setItem("userGrade", result.userGrade)
+                localStorage.setItem("userGrade", result.userGrade);
                 if (result.userName) {
                     localStorage.setItem("userName", result.userName);
                 }
@@ -33,13 +32,27 @@ function SignInPage() {
     const [fail, setFail] = useState(false);
 
     // 아이디와 비밀번호가 모두 공백이 아닐 때만 유효(활성화)
-    const isFormValid = id.trim().length > 0 && pwd.trim().length > 0;
+    const isFormValid = id.trim().length > 0 && pwd.length > 0;
 
     useEffect(() => {
-        const isLoggedIn = !!localStorage.getItem("accessToken");
-        if (isLoggedIn) {
-            navigate("/");
-        }
+        const checkAlreadyLoggedIn = async () => {
+            if (getAccessToken()) {
+                navigate("/");
+                return;
+            }
+            if (localStorage.getItem("userId")) {
+                try {
+                    const res = await reissueToken();
+                    if (res?.success && res?.accessToken) {
+                        navigate("/");
+                    }
+                } catch {
+                    // 미로그인 상태
+                }
+            }
+        };
+
+        checkAlreadyLoggedIn();
     }, [navigate]);
 
     const handleIdChange = (e) => {

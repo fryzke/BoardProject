@@ -27,5 +27,7 @@ public class PostDto {
 
     @JsonProperty("isPinned")
     private boolean isPinned;
+
+    private java.util.List<Long> fileIdList;
 }
 

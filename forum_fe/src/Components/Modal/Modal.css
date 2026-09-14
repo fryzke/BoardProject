@@ -28,11 +28,33 @@
     border-radius: 14px;
     width: 100%;
     max-width: 440px;
+    max-height: calc(100vh - 40px);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     overflow: hidden;
     animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     display: flex;
     flex-direction: column;
+}
+
+.ModalContainer--sm {
+    max-width: 360px;
+}
+
+.ModalContainer--md {
+    max-width: 440px;
+}
+
+.ModalContainer--lg {
+    max-width: 600px;
+}
+
+.ModalContainer--xl {
+    max-width: 800px;
+}
+
+.ModalContainer--full {
+    max-width: 95vw;
+    height: 90vh;
 }
 
 @keyframes modalPopIn {
@@ -107,6 +129,8 @@
 
 .ModalBody {
     padding: 20px;
+    overflow-y: auto;
+    flex: 1 1 auto;
 }
 
 .ModalMessage {

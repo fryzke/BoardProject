@@ -54,3 +54,15 @@ export const PaginationConfig = {
     COMMENTS_PER_PAGE: 10,
 };
 Object.freeze(PaginationConfig);
+
+export const searchOption = {
+    TITLE: "title",
+    COTENT: "content",
+    BOTH: "both",
+};
+Object.freeze(searchOption);
+
+export const searchValidation = {
+    MAX_KEYWORD_LENGTH : 100,
+};
+Object.freeze(searchValidation);

@@ -154,11 +154,13 @@ public class FileService {
         eventPublisher.publishEvent(new FileDeleteEvent(file.getStoredName()));
     }
 
-    // postId 가 미연결된 파일 삭제
+    // postId 가 미연결된 파일 연결
     public void deleteUnlinkedFile(Post post, PostDto dto) {
         List<File> unlinkedFiles = fileRepository.findAllByAuthorAndPostIsNull(post.getAuthor());
         for (File file : unlinkedFiles) {
-            if (dto.getContent().contains(file.getAccessUrl())) {
+            boolean inContent = dto.getContent() != null && dto.getContent().contains(file.getAccessUrl());
+            boolean inIdList = dto.getFileIdList() != null && dto.getFileIdList().contains(file.getId());
+            if (inContent || inIdList) {
                 file.setPost(post);
             }
         }

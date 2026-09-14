@@ -11,6 +11,19 @@ const api = axios.create({
     withCredentials: true,
 });
 
+let inMemoryAccessToken = null;
+
+export const setAccessToken = (token) => {
+    inMemoryAccessToken = token || null;
+    if (token) {
+        api.defaults.headers.common.Authorization = `Bearer ${token}`;
+    } else {
+        delete api.defaults.headers.common.Authorization;
+    }
+};
+
+export const getAccessToken = () => inMemoryAccessToken;
+
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -25,9 +38,9 @@ const processQueue = (error, token = null) => {
     failedQueue = [];
 };
 
-// 요청 시 JWT 토큰을 자동으로 헤더에 추가하는 인터셉터
+// 요청 시 메모리의 Access Token을 자동으로 Authorization 헤더에 추가
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = getAccessToken();
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -39,7 +52,7 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // 401 에러이고 재발급 요청 자체가 아닌 경우
+        // 401 에러이고 재발급 요청 자체가 아닌 경우 Refresh Token 쿠키로 자동 재발급 시도
         if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/reissue')) {
             if (isRefreshing) {
                 // 다른 요청이 이미 재발급을 진행 중이면 대기 큐에 저장
@@ -60,8 +73,7 @@ api.interceptors.response.use(
                 const res = await axios.post(`${API_BASE_URL}/auth/reissue`, {}, { withCredentials: true });
                 if (res.data?.success && res.data?.accessToken) {
                     const newAccessToken = res.data.accessToken;
-                    localStorage.setItem('accessToken', newAccessToken);
-                    api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+                    setAccessToken(newAccessToken);
                     originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
                     processQueue(null, newAccessToken);
@@ -71,7 +83,7 @@ api.interceptors.response.use(
                 }
             } catch (reissueError) {
                 processQueue(reissueError, null);
-                localStorage.removeItem('accessToken');
+                setAccessToken(null);
                 localStorage.removeItem('userId');
                 localStorage.removeItem('userName');
                 localStorage.removeItem('userRole');
@@ -105,6 +117,9 @@ export const registerUser = async (userId, userPassword, userName) => {
 export const loginUser = async (userId, userPassword) => {
     try {
         const response = await api.post('/auth/login', { userId, userPassword });
+        if (response.data?.success && response.data?.accessToken) {
+            setAccessToken(response.data.accessToken);
+        }
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) {
@@ -118,19 +133,32 @@ export const loginUser = async (userId, userPassword) => {
 export const logoutUser = async () => {
     try {
         const response = await api.post('/auth/logout');
+        setAccessToken(null);
         return response.data;
     } catch (error) {
+        setAccessToken(null);
         if (error.response && error.response.data) {
             return error.response.data;
         }
-        console.error("Login error:", error);
+        console.error("Logout error:", error);
         throw error;
     }
-}
+};
 
 export const reissueToken = async () => {
-    const response = await api.post('/auth/reissue');
-    return response.data;
+    try {
+        const response = await axios.post(`${API_BASE_URL}/auth/reissue`, {}, { withCredentials: true });
+        if (response.data?.success && response.data?.accessToken) {
+            setAccessToken(response.data.accessToken);
+        }
+        return response.data;
+    } catch (error) {
+        setAccessToken(null);
+        if (error.response?.data) {
+            return error.response.data;
+        }
+        throw error;
+    }
 };
 
 // ===== User APIs (마이페이지 연동) =====
@@ -190,9 +218,9 @@ export const getPost = async (id, options = {}) => {
     }
 };
 
-export const createPost = async (title, category, content, isPinned = false) => {
+export const createPost = async (title, category, content, isPinned = false, fileIdList = []) => {
     try {
-        const response = await api.post('/posts', { title, category, content, isPinned });
+        const response = await api.post('/posts', { title, category, content, isPinned, fileIdList });
         return response.data;
     } catch (error) {
         console.error("Create post error:", error);
@@ -200,9 +228,9 @@ export const createPost = async (title, category, content, isPinned = false) => 
     }
 };
 
-export const updatePost = async (id, title, category, content, isPinned = false) => {
+export const updatePost = async (id, title, category, content, isPinned = false, fileIdList = []) => {
     try {
-        const response = await api.put(`/posts/${id}`, { title, category, content, isPinned });
+        const response = await api.put(`/posts/${id}`, { title, category, content, isPinned, fileIdList });
         return response.data;
     } catch (error) {
         console.error("Update post error:", error);
@@ -220,13 +248,15 @@ export const deletePost = async (id) => {
     }
 };
 
-export const uploadImage = async (file, postId) => {
+// ===== File/Image APIs (파일 및 이미지 통합 처리) =====
+
+export const uploadFile = async (file, postId) => {
     try {
         const formData = new FormData();
         formData.append('file', file);
         const url = (postId !== null && postId !== undefined && !isNaN(postId))
-            ? `/images/upload?postId=${postId}`
-            : '/images/upload';
+            ? `/files/upload?postId=${postId}`
+            : '/files/upload';
         const response = await api.post(url, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
@@ -234,57 +264,85 @@ export const uploadImage = async (file, postId) => {
         });
         return response.data;
     } catch (error) {
-        console.error("Upload image error:", error);
+        console.error("Upload file error:", error);
         throw error;
     }
 };
 
-export const getImages = async (imageId) => {
+export const uploadFiles = async (files, postId) => {
     try {
-        const response = await api.get(`/images/${imageId}`);
-        return response.data;
-    } catch (error) {
-        console.error("Get image error:", error);
-        throw error;
-    }
-};
-
-export const updateImage = async (file, imageId) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await api.put(`/images/${imageId}`, formData, {
+        const formData = new FormData();
+        files.forEach((file) => {
+            formData.append('files', file);
+        });
+        const url = (postId !== null && postId !== undefined && !isNaN(postId))
+            ? `/files/upload?postId=${postId}`
+            : '/files/upload';
+        const response = await api.post(url, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
         return response.data;
     } catch (error) {
-        console.error("Update image error:", error);
+        console.error("Upload files error:", error);
         throw error;
     }
 };
 
-export const deleteImage = async (imageId) => {
+export const getFiles = async (postId) => {
     try {
-        const response = await api.delete(`/images/${imageId}`);
+        const response = await api.get(`/files/${postId}`);
         return response.data;
     } catch (error) {
-        console.error("Delete image error:", error);
+        console.error("Get files error:", error);
         throw error;
     }
 };
 
-export const deleteBatchImages = async (fileIds) => {
+export const updateFile = async (file, fileId) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
     try {
-        const response = await api.post('/images/delete-batch', fileIds);
+        const response = await api.put(`/files/${fileId}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
         return response.data;
     } catch (error) {
-        console.error("Delete batch images error:", error);
+        console.error("Update file error:", error);
         throw error;
     }
 };
+
+export const deleteFile = async (fileId) => {
+    try {
+        const response = await api.delete(`/files/${fileId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Delete file error:", error);
+        throw error;
+    }
+};
+
+export const deleteBatchFiles = async (fileIds) => {
+    try {
+        const response = await api.post('/files/delete-batch', fileIds);
+        return response.data;
+    } catch (error) {
+        console.error("Delete batch files error:", error);
+        throw error;
+    }
+};
+
+// 하위 호환성 및 명시적 이미지 처리를 위한 Alias
+export const uploadImage = uploadFile;
+export const getImages = getFiles;
+export const updateImage = updateFile;
+export const deleteImage = deleteFile;
+export const deleteBatchImages = deleteBatchFiles;
 
 // ===== Comment APIs (백엔드 실제 연동) =====
 

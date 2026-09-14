@@ -8,6 +8,7 @@ import com.example.forum.domain.Post;
 import com.example.forum.domain.Role;
 import com.example.forum.domain.User;
 import com.example.forum.dto.PostDto;
+import com.example.forum.utils.HtmlUtils;
 
 @Component
 public class PostValidator {
@@ -82,13 +83,16 @@ public class PostValidator {
         if (dto.getTitle() != null) {
             int len = dto.getTitle().trim().length();
             if (len < minTitleLength || len > maxTitleLength) {
-                throw new IllegalArgumentException(String.format("제목은 %d자 이상 %d자 이하로 입력해주세요.", minTitleLength, maxTitleLength));
+                throw new IllegalArgumentException(
+                        String.format("제목은 %d자 이상 %d자 이하로 입력해주세요.", minTitleLength, maxTitleLength));
             }
         }
         if (dto.getContent() != null) {
-            int len = dto.getContent().trim().length();
+            String plainText = HtmlUtils.removeTag(dto.getContent());
+            int len = plainText.trim().length();
             if (len < minContentLength || len > maxContentLength) {
-                throw new IllegalArgumentException(String.format("본문은 %d자 이상 %,d자 이하로 입력해주세요.", minContentLength, maxContentLength));
+                throw new IllegalArgumentException(
+                        String.format("본문은 %d자 이상 %,d자 이하로 입력해주세요.", minContentLength, maxContentLength));
             }
         }
     }
@@ -103,4 +107,3 @@ public class PostValidator {
         }
     }
 }
-

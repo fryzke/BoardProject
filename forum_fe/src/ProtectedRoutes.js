@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { reissueToken } from './api';
+import { reissueToken, getAccessToken, setAccessToken } from './api';
 
 const parseJwt = (token) => {
     try {
@@ -16,47 +16,35 @@ export default function ProtectedRoute({ children }) {
 
     useEffect(() => {
         const checkAuth = async () => {
-            const token = localStorage.getItem('accessToken');
-            if (!token) {
-                setIsAuthenticated(false);
-                setLoading(false);
-                return;
+            const token = getAccessToken();
+            if (token) {
+                const payload = parseJwt(token);
+                if (payload && payload.exp && payload.exp * 1000 > Date.now()) {
+                    setIsAuthenticated(true);
+                    setLoading(false);
+                    return;
+                }
             }
 
-            const payload = parseJwt(token);
-            if (!payload) {
-                // 토큰 형식이 손상된 가짜 토큰인 경우
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('userId');
-                localStorage.removeItem('userName');
-                setIsAuthenticated(false);
-                setLoading(false);
-                return;
-            }
-
-            // 1. Access Token이 아직 만료되지 않은 경우 바로 통과
-            if (payload.exp && payload.exp * 1000 > Date.now()) {
-                setIsAuthenticated(true);
-                setLoading(false);
-                return;
-            }
-
-            // 2. Access Token이 만료된 경우: Refresh Token 쿠키로 자동 재발급 시도
+            // 1. 메모리에 유효한 토큰이 없거나 만료된 경우: Refresh Token 쿠키로 자동 재발급 시도
             try {
                 const res = await reissueToken();
                 if (res?.success && res?.accessToken) {
-                    localStorage.setItem('accessToken', res.accessToken);
                     setIsAuthenticated(true);
                 } else {
-                    localStorage.removeItem('accessToken');
+                    setAccessToken(null);
                     localStorage.removeItem('userId');
                     localStorage.removeItem('userName');
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('userGrade');
                     setIsAuthenticated(false);
                 }
             } catch (e) {
-                localStorage.removeItem('accessToken');
+                setAccessToken(null);
                 localStorage.removeItem('userId');
                 localStorage.removeItem('userName');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userGrade');
                 setIsAuthenticated(false);
             } finally {
                 setLoading(false);

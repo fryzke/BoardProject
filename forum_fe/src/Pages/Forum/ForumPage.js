@@ -4,7 +4,7 @@ import axios from 'axios';
 import './ForumPage.css';
 import Pagination from './Pagination';
 import { formatDate } from '../../utils';
-import { fetchPosts, logoutUser } from '../../api';
+import { fetchPosts, logoutUser, getAccessToken, reissueToken } from '../../api';
 import { Category, SortType, PaginationConfig } from '../../enum';
 import { useToast } from '../../Components/Toast/ToastContext';
 
@@ -24,13 +24,29 @@ function ForumPage() {
     const userGrade = localStorage.getItem("userGrade");
 
     useEffect(() => {
-        const token = localStorage.getItem("accessToken");
         const storedUserName = localStorage.getItem("userName") || localStorage.getItem("userId");
-
-        if (token) {
-            setIsLoggedIn(true);
-            if (storedUserName) setUserName(storedUserName);
+        if (storedUserName) {
+            setUserName(storedUserName);
         }
+
+        const initAuth = async () => {
+            if (getAccessToken()) {
+                setIsLoggedIn(true);
+                return;
+            }
+            if (localStorage.getItem("userId")) {
+                try {
+                    const res = await reissueToken();
+                    if (res?.success && res?.accessToken) {
+                        setIsLoggedIn(true);
+                    }
+                } catch {
+                    // 미로그인 상태
+                }
+            }
+        };
+
+        initAuth();
     }, []);
 
     useEffect(() => {
@@ -76,9 +92,10 @@ function ForumPage() {
 
     const handleAuthAction = async () => {
         if (isLoggedIn) {
-            localStorage.removeItem("accessToken");
             localStorage.removeItem("userId");
             localStorage.removeItem("userName");
+            localStorage.removeItem("userRole");
+            localStorage.removeItem("userGrade");
             try {
                 const result = await logoutUser();
                 if (result.success) {

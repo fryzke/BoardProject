@@ -1,5 +1,6 @@
 import DOMPurify from 'dompurify';
 import axios from 'axios';
+import { getAccessToken } from './api';
 
 const SANITIZE_CONFIG = {
     ADD_ATTR: ['target', 'download', 'class', 'data-filename', 'data-filesize', 'data-type'],
@@ -59,14 +60,13 @@ export const formatDetailContent = (content) => {
     }
     return sanitized.replace(/<p>\s*<\/p>/gi, '<p><br /></p>');
 };
-
 /**
  * 첨부파일 다운로드 실행 함수
  * Blob을 생성하여 브라우저에서 직접 파일 다운로드를 트리거합니다.
  */
 export const downloadFile = async (fileUrl, suggestedFileName) => {
     try {
-        const token = localStorage.getItem('accessToken');
+        const token = getAccessToken();
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         const response = await axios.get(fileUrl, {

@@ -37,6 +37,10 @@ dependencies {
 	implementation 'org.springframework.retry:spring-retry:2.0.11'
 	implementation 'org.springframework:spring-aspects'
 
+
+	//jsoup HTML parser library
+	implementation 'org.jsoup:jsoup:1.23.2'
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
