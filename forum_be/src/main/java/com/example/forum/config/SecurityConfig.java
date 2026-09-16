@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 회원가입, 로그인, 게시글 목록, 단건 조회는 인증 없이 허용
+                        // 회원가입, 로그인, 게시글/댓글/파일 목록, 단건 조회는 인증 없이 허용
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/error").permitAll()

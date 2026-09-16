@@ -1,0 +1,38 @@
+package com.example.forum.dto;
+
+import java.time.LocalDateTime;
+
+import com.example.forum.domain.Post;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor 
+public class PostListResponseDto {
+    private Long id;
+    private String title;
+    private String category;
+    private String author;
+
+    @JsonProperty("isPinned")
+    private boolean isPinned;
+
+    private LocalDateTime createdAt;
+    private int viewCount;
+    private int commentCount;
+
+    public PostListResponseDto(Post post) {
+        this.id = post.getId();
+        this.title = post.getTitle();
+        this.category = post.getCategory().getName();
+        this.isPinned = post.isPinned();
+        this.author = post.getAuthor().getUserId();
+        this.createdAt = post.getCreatedAt();
+        this.viewCount = post.getViewCount();
+        this.commentCount = post.getCommentCount();
+    }
+}

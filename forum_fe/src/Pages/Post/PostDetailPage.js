@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatDate, formatDetailContent } from '../../utils';
-import { getPost, deletePost, getAccessToken, reissueToken } from '../../api';
+import { getPost, deletePost, reissueToken } from '../../api';
 import './PostDetailPage.css';
 import parse from 'html-react-parser';
 import CommentSection from './CommentSection';
@@ -21,14 +21,10 @@ function PostDetailPage() {
 
     useEffect(() => {
         const initAuth = async () => {
-            if (getAccessToken()) {
-                setIsLoggedIn(true);
-                return;
-            }
             if (localStorage.getItem("userId")) {
                 try {
                     const res = await reissueToken();
-                    if (res?.success && res?.accessToken) {
+                    if (res?.success) {
                         setIsLoggedIn(true);
                     }
                 } catch {

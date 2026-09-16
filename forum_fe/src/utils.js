@@ -1,6 +1,5 @@
 import DOMPurify from 'dompurify';
 import axios from 'axios';
-import { getAccessToken } from './api';
 
 const SANITIZE_CONFIG = {
     ADD_ATTR: ['target', 'download', 'class', 'data-filename', 'data-filesize', 'data-type'],
@@ -66,12 +65,9 @@ export const formatDetailContent = (content) => {
  */
 export const downloadFile = async (fileUrl, suggestedFileName) => {
     try {
-        const token = getAccessToken();
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
         const response = await axios.get(fileUrl, {
             responseType: 'blob',
-            headers,
+            withCredentials: true,
         });
 
         // Content-Disposition 헤더에서 파일명 추출 시도

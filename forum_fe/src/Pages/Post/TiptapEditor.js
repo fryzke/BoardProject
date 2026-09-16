@@ -161,6 +161,11 @@ export default function TiptapEditor({
             }),
         ],
         content: normalizeContentForEditor(content),
+        onCreate: ({ editor }) => {
+            const html = DOMPurify.sanitize(editor.getHTML());
+            const plainText = editor.getText().trim();
+            onChange(html, plainText);
+        },
         onUpdate: ({ editor }) => {
             const html = DOMPurify.sanitize(editor.getHTML());
             const plainText = editor.getText().trim();
@@ -173,6 +178,7 @@ export default function TiptapEditor({
             const normalized = normalizeContentForEditor(content);
             if (editor.getHTML() !== normalized && editor.getHTML() !== content) {
                 editor.commands.setContent(normalized);
+
             }
         }
     }, [content, editor]);

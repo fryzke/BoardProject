@@ -5,6 +5,7 @@ import com.example.forum.domain.File;
 import com.example.forum.domain.Post;
 import com.example.forum.domain.User;
 import com.example.forum.dto.PostDto;
+import com.example.forum.dto.PostListResponseDto;
 import com.example.forum.dto.PostResponseDto;
 import com.example.forum.dto.RestPage;
 import com.example.forum.event.FileDeleteEvent;
@@ -94,7 +95,8 @@ public class PostService {
 
     // 목록 조회
     @Transactional(readOnly = true)
-    public Page<PostResponseDto> getPosts(int page, int size, String category, String sort) {
+    public Page<PostListResponseDto> getPosts(int page, int size, String category, String keyword, String option,
+            String sort) {
         int pageIndex = Math.max(0, page - 1);
 
         Pageable pageable = sort.equalsIgnoreCase("latest")
@@ -103,12 +105,35 @@ public class PostService {
                 : PageRequest.of(pageIndex, size, Sort.by(Sort.Order.desc("isPinned"),
                         Sort.Order.desc("viewCount")));
 
-        Page<Post> postPage = "all".equalsIgnoreCase(category)
-                ? postRepository.findAll(pageable)
-                : postRepository.findByCategory(Category.deserialize(category), pageable);
+        Page<Post> postPage = searchPosts(category, keyword, option, pageable);
 
-        List<PostResponseDto> content = postPage.stream().map(PostResponseDto::new).toList();
+        List<PostListResponseDto> content = postPage.stream().map(PostListResponseDto::new).toList();
         return new RestPage<>(content, pageable, postPage.getTotalElements());
+    }
+
+    private Page<Post> searchPosts(String category, String keyword, String option, Pageable pageable) {
+        if (!"all".equalsIgnoreCase(category)) {
+            return postRepository.findByCategory(Category.deserialize(category), pageable);
+        }
+
+        if (keyword == null || option == null) {
+            return postRepository.findAll(pageable);
+        }
+
+        String[] searchKeyword = tokenize(keyword);
+
+        return switch (option.toLowerCase()) {
+            case "title" -> postRepository.findByTitleContainingIgnoreCase(searchKeyword, pageable);
+            case "content" -> postRepository.findByContentContainingIgnoreCase(searchKeyword, pageable);
+            default -> postRepository.findByTitleOrContentContainingIgnoreCase(searchKeyword, pageable);
+        };
+    }
+
+    private String[] tokenize(String keyword){
+        if(keyword.isBlank()){
+            throw new IllegalArgumentException("검색어를 입력해주세요.");
+        }
+        return keyword.trim().replace("\\s+"," ").split(" ");
     }
 
     // 게시글 삭제 (물리 파일 삭제 이벤트 발행)

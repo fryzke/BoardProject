@@ -1,7 +1,11 @@
 package com.example.forum.controller;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,7 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriUtils;
 
+import com.example.forum.dto.FileDownloadDto;
 import com.example.forum.dto.FileResponseDto;
 import com.example.forum.dto.common.ApiResponse;
 import com.example.forum.service.FileService;
@@ -22,14 +28,14 @@ import com.example.forum.service.FileService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping({ "/api/files", "/api/images" }) 
+@RequestMapping({ "/api/files"}) 
 @RequiredArgsConstructor
 public class FileController {
 
     private final FileService fileService;
 
     /*
-     * POST /api/files/upload 또는 /api/images/upload
+     * POST /api/files/upload 
      * 파일/이미지 통합 업로드 (단건 및 다중 업로드 지원)
      */
     @PostMapping("/upload")
@@ -51,7 +57,7 @@ public class FileController {
     }
 
     /*
-     * GET /api/files/{postId} 또는 /api/images/{postId}
+     * GET /api/files/{postId} 
      * 게시글에 첨부된 파일 목록 조회
      */
     @GetMapping("/{postId}")
@@ -61,7 +67,7 @@ public class FileController {
     }
 
     /*
-     * PUT /api/files/{fileId} 또는 /api/images/{fileId}
+     * PUT /api/files/{fileId} 
      * 파일 수정 (새 파일로 교체: 메타데이터 수정 -> 2차 검증 -> 물리 파일 저장)
      */
     @PutMapping("/{fileId}")
@@ -79,7 +85,7 @@ public class FileController {
     }
 
     /*
-     * DELETE /api/files/{fileId} 또는 /api/images/{fileId}
+     * DELETE /api/files/{fileId} 
      * 파일 삭제 (논리 삭제 + 물리 파일 비동기 삭제)
      */
     @DeleteMapping("/{fileId}")
@@ -91,35 +97,35 @@ public class FileController {
     }
 
     /*
-     * GET /api/files/download/{fileId} 또는 /api/images/download/{fileId}
+     * GET /api/files/download/{fileId} 
      * 파일 다운로드 API (파일 ID 기준)
      */
     @GetMapping("/download/{fileId}")
-    public ResponseEntity<org.springframework.core.io.Resource> downloadFile(@PathVariable Long fileId) {
-        FileService.FileDownloadDto downloadDto = fileService.downloadFile(fileId);
-        String encodedFileName = org.springframework.web.util.UriUtils.encode(downloadDto.originalName(), java.nio.charset.StandardCharsets.UTF_8);
+    public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId) {
+        FileDownloadDto downloadDto = fileService.downloadFile(fileId);
+        String encodedFileName = UriUtils.encode(downloadDto.originalName(), StandardCharsets.UTF_8);
         return ResponseEntity.ok()
-                .contentType(org.springframework.http.MediaType.parseMediaType(downloadDto.contentType() != null ? downloadDto.contentType() : org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE))
-                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
+                .contentType(MediaType.parseMediaType(downloadDto.contentType() != null ? downloadDto.contentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
                 .body(downloadDto.resource());
     }
 
     /*
-     * GET /api/files/download 또는 /api/images/download
+     * GET /api/files/download 
      * 파일 다운로드 API (storedName 기준)
      */
     @GetMapping("/download")
     public ResponseEntity<org.springframework.core.io.Resource> downloadFileByName(@RequestParam("storedName") String storedName) {
-        FileService.FileDownloadDto downloadDto = fileService.downloadFileByStoredName(storedName);
-        String encodedFileName = org.springframework.web.util.UriUtils.encode(downloadDto.originalName(), java.nio.charset.StandardCharsets.UTF_8);
+        FileDownloadDto downloadDto = fileService.downloadFileByStoredName(storedName);
+        String encodedFileName = UriUtils.encode(downloadDto.originalName(), StandardCharsets.UTF_8);
         return ResponseEntity.ok()
-                .contentType(org.springframework.http.MediaType.parseMediaType(downloadDto.contentType() != null ? downloadDto.contentType() : org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE))
-                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
+                .contentType(MediaType.parseMediaType(downloadDto.contentType() != null ? downloadDto.contentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
                 .body(downloadDto.resource());
     }
 
     /*
-     * POST /api/files/delete-batch 또는 /api/images/delete-batch
+     * POST /api/files/delete-batch 
      * 다중 파일 삭제 API
      */
     @PostMapping("/delete-batch")

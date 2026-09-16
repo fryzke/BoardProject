@@ -137,3 +137,8 @@
 .SubmitBtn:hover {
     background-color: #333;
 }
+
+.SubmitBtn:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+}

@@ -19,6 +19,7 @@ function PostEditPage() {
     const [attachedFiles, setAttachedFiles] = useState([]);
     const [fileIdList, setFileIdList] = useState([]);
     const [content, setContent] = useState("");
+    const [beforeEdit, setBeforeEdit] = useState("");
     const [plainText, setPlainText] = useState("");
     const [isPinned, setIsPinned] = useState(false);
     const [loading, setLoading] = useState(isEditMode);
@@ -26,8 +27,8 @@ function PostEditPage() {
     const userRole = localStorage.getItem("userRole");
 
     const isTitleValid = title.trim().length >= PostValidation.MIN_TITLE_LENGTH && title.trim().length <= PostValidation.MAX_TITLE_LENGTH;
-    const isContentValid = plainText.length > 0 && plainText.length <= PostValidation.MAX_CONTENT_LENGTH;
-    const isValid = isTitleValid && isContentValid;
+    const isContentValid = plainText.trim().length > 0 && plainText.trim().length <= PostValidation.MAX_CONTENT_LENGTH;
+    const isValid = isTitleValid && isContentValid && selectedCategory && (content !== beforeEdit);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -43,6 +44,12 @@ function PostEditPage() {
                     }
                     setTitle(data.title);
                     setContent(data.content);
+                    setBeforeEdit(data.content);
+                    if (data.content) {
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = data.content;
+                        setPlainText(tempDiv.textContent || tempDiv.innerText || "");
+                    }
                     if (data.category) setSelectedCategory(data.category);
                     setIsPinned(Boolean(data.isPinned ?? data.pinned));
                     if (data.files && Array.isArray(data.files)) {

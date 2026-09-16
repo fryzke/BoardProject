@@ -64,7 +64,7 @@ public class CommentService {
                 .build();
 
         commentRepository.save(comment);
-
+        post.increaseCommentCount();
         return new CommentResponseDto(comment);
     }
 
@@ -144,9 +144,10 @@ public class CommentService {
     public void deleteComment(Long postId, Long commentId, String loginUserId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 댓글입니다."));
-
         commentValidator.validateDelete(comment, postId, loginUserId);
-
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
         comment.delete();
+        post.decreaseCommentCount();
     }
 }

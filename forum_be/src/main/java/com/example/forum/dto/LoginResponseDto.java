@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginResponseDto {
     private boolean success;
-    private String accessToken;
     private String userId;
     private String userRole;
     private String userGrade;

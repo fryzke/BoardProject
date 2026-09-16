@@ -1,20 +1,22 @@
+import './SearchResultPage.css';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import './ForumPage.css';
-import Pagination from './Pagination';
+import Pagination from '../Forum/Pagination';
 import { formatDate } from '../../utils';
 import { fetchPosts, logoutUser, reissueToken } from '../../api';
-import { Category, SortType, PaginationConfig } from '../../enum';
+import { SortType, PaginationConfig } from '../../enum';
 import { useToast } from '../../Components/Toast/ToastContext';
 import SearchBar from '../../Components/Search/SearchBar';
 
-function ForumPage() {
+function SearchResultPage() {
     const navigate = useNavigate();
     const toast = useToast();
+    const [searchParams] = useSearchParams();
     const [posts, setPosts] = useState([]);
-    const [currentCategory, setCurrentCategory] = useState(Category.ALL);
     const [sort, setSort] = useState(SortType.LATEST);
+    const keyword = searchParams.get('keyword') || null;
+    const option = searchParams.get('option') || null;
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalPosts, setTotalPosts] = useState(0);
@@ -51,18 +53,14 @@ function ForumPage() {
 
         const loadPosts = async () => {
             setLoading(true);
-            var category = null;
-            if (currentCategory === Category.ALL) {
-                category = "all";
-            } else {
-                category = currentCategory;
-            }
             try {
                 const result = await fetchPosts(
                     currentPage,
                     PaginationConfig.POSTS_PER_PAGE,
                     sort,
-                    category,
+                    "all",
+                    keyword,
+                    option,
                     { signal: controller.signal }
                 );
                 setPosts(result.data);
@@ -85,7 +83,7 @@ function ForumPage() {
         return () => {
             controller.abort();
         };
-    }, [currentPage, currentCategory, sort]);
+    }, [currentPage, keyword, option, sort]);
 
     const handleAuthAction = async () => {
         if (isLoggedIn) {
@@ -111,14 +109,13 @@ function ForumPage() {
             navigate("/sign-in");
         }
     };
-
     return (
-        <div className="Forum">
-            <div className="ForumContainer">
-                <div className="ForumHeader">
-                    <div className="ForumTitleSection">
-                        <h1 className="ForumTitle" onClick={() => setCurrentPage(1)}>
-                            {currentCategory}게시판
+        <div className="SearchResult">
+            <div className="SearchResultContainer">
+                <div className="SearchResultHeader">
+                    <div className="SearchResultTitleSection">
+                        <h1 className="SearchResultTitle" onClick={() => setCurrentPage(1)}>
+                            검색 결과
                         </h1>
                         <span className="TotalCount">총 <strong>{totalPosts}</strong>건</span>
                     </div>
@@ -126,8 +123,8 @@ function ForumPage() {
                     <div className="NavActions">
                         {isLoggedIn && (
                             <>
-                                <span 
-                                    className="UserWelcome" 
+                                <span
+                                    className="UserWelcome"
                                     style={{ cursor: 'pointer' }}
                                     onClick={() => navigate('/mypage')}
                                     title="마이페이지로 이동"
@@ -154,20 +151,8 @@ function ForumPage() {
                     </div>
                 </div>
 
-                <div className="ForumFilterBar">
-                    <select
-                        className="ForumCategory"
-                        id="category"
-                        value={currentCategory}
-                        onChange={(e) => setCurrentCategory(e.target.value)}>
-                        {
-                            Object.values(Category).map((category) => (
-                                <option value={category}>{category}</option>
-                            ))
-                        }
-                    </select>
-
-                    <div className="ForumSortOptions">
+                <div className="SearchResultFilterBar">
+                    <div className="SearchResultSortOptions">
                         <span className={`SortOption ${sort === SortType.LATEST ? 'active' : ''}`}
                             onClick={() => setSort(SortType.LATEST)}>최신순</span>
                         <span className="SortDivider">|</span>
@@ -177,7 +162,7 @@ function ForumPage() {
                 </div>
 
                 <div className="TableWrapper">
-                    <table className="ForumTable">
+                    <table className="SearchResultTable">
                         <thead>
                             <tr>
                                 <th className="ThNo">번호</th>
@@ -220,7 +205,7 @@ function ForumPage() {
                                             <td className="TdCategory">{post.category}</td>
                                             <td className="TdTitle">
                                                 {isPinned && <span className="PinnedTitleTag">[고정]</span>}
-                                                <span className="TitleText">{post.title} {post.commentCount > 0 && `[${post.commentCount}]`}</span>
+                                                <span className="TitleText">{post.title}</span>
                                             </td>
                                             <td className="TdAuthor">{post.author || '-'}</td>
                                             <td className="TdDate">{formatDate(post.createdAt || post.date)}</td>
@@ -233,7 +218,7 @@ function ForumPage() {
                     </table>
                 </div>
 
-                <div className="ForumFooter">
+                <div className="SearchResultFooter">
                     <div className="PaginationWrapper">
                         <Pagination
                             currentPage={currentPage}
@@ -250,12 +235,11 @@ function ForumPage() {
                     )}
                 </div>
 
-                <div className="ForumSearchSection">
+                <div className="SearchResultSearchSection">
                     <SearchBar />
                 </div>
             </div>
         </div>
     );
 }
-
-export default ForumPage;
+export default SearchResultPage;

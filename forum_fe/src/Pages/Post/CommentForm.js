@@ -7,6 +7,8 @@ function CommentForm({ postId, comment, parentId, onSuccess, onCancel }) {
     const toast = useToast();
     const [content, setContent] = useState(comment?.content || "");
     const isEditMode = !!comment;
+    const [beforeEdit, setBeforeEdit] = useState(comment?.content || "");
+    const isValid = (content !== beforeEdit) && content.trim() > 0;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,6 +21,7 @@ function CommentForm({ postId, comment, parentId, onSuccess, onCancel }) {
         try {
             if (isEditMode) {
                 await updateComment(postId, comment.id, content, comment.parentId);
+                setBeforeEdit(content);
                 toast.success("댓글이 수정되었습니다.");
             } else {
                 await createComment(postId, content, parentId || null);
@@ -50,7 +53,7 @@ function CommentForm({ postId, comment, parentId, onSuccess, onCancel }) {
                 />
             </div>
             <div className="comment-form-actions">
-                <button type="submit" className="comment-submit-btn">{isEditMode ? "수정" : "게시"}</button>
+                <button type="submit" className="comment-submit-btn" disabled={!isValid}>{isEditMode ? "수정" : "게시"}</button>
                 {isEditMode && onCancel && (
                     <button type="button" className="comment-cancel-btn" onClick={onCancel}>취소</button>
                 )}

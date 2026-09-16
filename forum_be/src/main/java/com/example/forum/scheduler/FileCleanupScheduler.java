@@ -28,20 +28,21 @@ public class FileCleanupScheduler {
         LocalDateTime threshold = LocalDateTime.now().minusHours(24);
         List<File> orphanFiles = fileRepository.findAllByPostIsNullAndCreatedAtBefore(threshold);
 
-        if (orphanFiles.isEmpty()) {
-            return;
-        }
+        if (!orphanFiles.isEmpty()) {
+            log.info("=== 미연결 유령 파일 정리 시작: 총 {}개 ===", orphanFiles.size());
 
-        log.info("=== 미연결 유령 파일 정리 시작: 총 {}개 ===", orphanFiles.size());
-
-        for (File file : orphanFiles) {
-            try {
-               fileService.deleteFileBySystem(file);
-            } catch (Exception e) {
-                log.error("유령 파일 삭제 중 오류 발생 [fileId={}]: {}", file.getId(), e.getMessage());
+            for (File file : orphanFiles) {
+                try {
+                    fileService.deleteFileBySystem(file);
+                } catch (Exception e) {
+                    log.error("유령 파일 삭제 중 오류 발생 [fileId={}]: {}", file.getId(), e.getMessage());
+                }
             }
+
+            log.info("=== 미연결 유령 파일 정리 완료 ===");
         }
 
-        log.info("=== 미연결 유령 파일 정리 완료 ===");
+        // 남아있는 빈 디렉터리(유령 폴더) 일괄 정리
+        fileService.cleanupEmptyDirectories();
     }
 }

@@ -60,6 +60,12 @@ public class Post extends BaseEntity {
     @Column(name = "view_count", nullable = false)
     private int viewCount = 0;
 
+
+    
+    @Builder.Default
+    @Column(name= "comment_count", nullable = false)
+    private int commentCount = 0;
+    
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -81,6 +87,15 @@ public class Post extends BaseEntity {
     public void increaseViewCount() {
         this.viewCount++;
     }
+
+    
+    public void increaseCommentCount() {
+        this.commentCount++;
+    }
+    public void decreaseCommentCount() {
+        this.commentCount--;
+    }
+    
 
     @PreRemove
     public void onPreRemove() {

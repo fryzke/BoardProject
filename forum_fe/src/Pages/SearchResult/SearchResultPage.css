@@ -1,4 +1,4 @@
-.Forum {
+.SearchResult {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -10,7 +10,7 @@
     color: #333;
 }
 
-.ForumContainer {
+.SearchResultContainer {
     width: 100%;
     max-width: 1000px;
     display: flex;
@@ -19,7 +19,7 @@
 }
 
 /* 게시판 헤더 */
-.ForumHeader {
+.SearchResultHeader {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -27,13 +27,13 @@
     padding-bottom: 8px;
 }
 
-.ForumTitleSection {
+.SearchResultTitleSection {
     display: flex;
     align-items: baseline;
     gap: 12px;
 }
 
-.ForumTitle {
+.SearchResultTitle {
     font-size: 26px;
     font-weight: 700;
     color: #111;
@@ -125,33 +125,15 @@
     color: #333;
 }
 
-
-.ForumFilterBar {
+.SearchResultFilterBar {
     display: flex;
-    justify-content: space-between;
+    justify-content: end;
     align-items: center;
     width: 100%;
     margin-bottom: 4px;
 }
 
-.ForumCategory {
-    width: 130px;
-    height: 34px;
-    padding: 0 12px;
-    font-size: 13px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    box-sizing: border-box;
-    background-color: #fff;
-    cursor: pointer;
-    outline: none;
-}
-
-.ForumCategory:focus {
-    border-color: #2b3a4a;
-}
-
-.ForumSortOptions {
+.SearchResultSortOptions {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -189,7 +171,7 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.ForumTable {
+.SearchResultTable {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
@@ -197,7 +179,7 @@
 }
 
 /* 테이블 헤더 */
-.ForumTable thead th {
+.SearchResultTable thead th {
     background-color: #f8f9fa;
     color: #333;
     font-size: 14px;
@@ -231,7 +213,7 @@
 }
 
 /* 테이블 바디 */
-.ForumTable tbody td {
+.SearchResultTable tbody td {
     padding: 14px 10px;
     font-size: 14px;
     color: #444;
@@ -333,7 +315,7 @@
 }
 
 /* 푸터 및 페이지네이션 */
-.ForumFooter {
+.SearchResultFooter {
     position: relative;
     display: flex;
     justify-content: center;
@@ -354,7 +336,7 @@
     transform: translateY(-50%);
 }
 
-.ForumSearchSection {
+.SearchResultSearchSection {
     display: flex;
     justify-content: center;
     align-items: center;

@@ -11,6 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ReissueResponseDto {
     private boolean success;
-    private String accessToken;
     private String message;
 }

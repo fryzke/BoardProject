@@ -11,19 +11,6 @@ const api = axios.create({
     withCredentials: true,
 });
 
-let inMemoryAccessToken = null;
-
-export const setAccessToken = (token) => {
-    inMemoryAccessToken = token || null;
-    if (token) {
-        api.defaults.headers.common.Authorization = `Bearer ${token}`;
-    } else {
-        delete api.defaults.headers.common.Authorization;
-    }
-};
-
-export const getAccessToken = () => inMemoryAccessToken;
-
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -38,15 +25,6 @@ const processQueue = (error, token = null) => {
     failedQueue = [];
 };
 
-// 요청 시 메모리의 Access Token을 자동으로 Authorization 헤더에 추가
-api.interceptors.request.use((config) => {
-    const token = getAccessToken();
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
-
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -59,8 +37,7 @@ api.interceptors.response.use(
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 })
-                    .then((token) => {
-                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                    .then(() => {
                         return api(originalRequest);
                     })
                     .catch((err) => Promise.reject(err));
@@ -71,19 +48,14 @@ api.interceptors.response.use(
 
             try {
                 const res = await axios.post(`${API_BASE_URL}/auth/reissue`, {}, { withCredentials: true });
-                if (res.data?.success && res.data?.accessToken) {
-                    const newAccessToken = res.data.accessToken;
-                    setAccessToken(newAccessToken);
-                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-                    processQueue(null, newAccessToken);
+                if (res.data?.success) {
+                    processQueue(null);
                     return api(originalRequest);
                 } else {
                     throw new Error('토큰 재발급 응답이 올바르지 않습니다.');
                 }
             } catch (reissueError) {
                 processQueue(reissueError, null);
-                setAccessToken(null);
                 localStorage.removeItem('userId');
                 localStorage.removeItem('userName');
                 localStorage.removeItem('userRole');
@@ -117,9 +89,6 @@ export const registerUser = async (userId, userPassword, userName) => {
 export const loginUser = async (userId, userPassword) => {
     try {
         const response = await api.post('/auth/login', { userId, userPassword });
-        if (response.data?.success && response.data?.accessToken) {
-            setAccessToken(response.data.accessToken);
-        }
         return response.data;
     } catch (error) {
         if (error.response && error.response.data) {
@@ -133,10 +102,8 @@ export const loginUser = async (userId, userPassword) => {
 export const logoutUser = async () => {
     try {
         const response = await api.post('/auth/logout');
-        setAccessToken(null);
         return response.data;
     } catch (error) {
-        setAccessToken(null);
         if (error.response && error.response.data) {
             return error.response.data;
         }
@@ -148,12 +115,8 @@ export const logoutUser = async () => {
 export const reissueToken = async () => {
     try {
         const response = await axios.post(`${API_BASE_URL}/auth/reissue`, {}, { withCredentials: true });
-        if (response.data?.success && response.data?.accessToken) {
-            setAccessToken(response.data.accessToken);
-        }
         return response.data;
     } catch (error) {
-        setAccessToken(null);
         if (error.response?.data) {
             return error.response.data;
         }
@@ -185,9 +148,11 @@ export const updateUserInfo = async (userData) => {
 
 // ===== Post APIs (백엔드 실제 연동) =====
 
-export const fetchPosts = async (page = 1, limit = 20, sort = "latest", category = "all", options = {}) => {
+export const fetchPosts = async (page = 1, limit = 20, sort = "latest", category = "all", keyword = null, option = null, options = {}) => {
     try {
-        const response = await api.get(`/posts?page=${page}&limit=${limit}&sort=${sort}&category=${category}`, options);
+        const response = (keyword == null || option == null) 
+        ? await api.get(`/posts?page=${page}&limit=${limit}&sort=${sort}&category=${category}`, options)
+        : await api.get(`/posts?page=${page}&limit=${limit}&sort=${sort}&category=${category}&keyword=${keyword}&option=${option}`, options);
         return {
             data: response?.data.data ?? [],
             pagination: response?.data.pagination ?? null

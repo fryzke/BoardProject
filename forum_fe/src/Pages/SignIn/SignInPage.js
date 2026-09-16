@@ -1,14 +1,14 @@
 import "./SignInPage.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser, getAccessToken, reissueToken } from "../../api";
+import { useToast } from "../../Components/Toast/ToastContext";
+import { loginUser, reissueToken } from "../../api";
 
 async function handleLogin(id, pwd, valid, navigate, setFail) {
     if (valid) {
         try {
             const result = await loginUser(id, pwd);
             if (result.success) {
-                // Access Token은 loginUser 내부에서 메모리에 저장됨
                 localStorage.setItem("userId", id);
                 localStorage.setItem("userRole", result.userRole);
                 localStorage.setItem("userGrade", result.userGrade);
@@ -27,6 +27,8 @@ async function handleLogin(id, pwd, valid, navigate, setFail) {
 
 function SignInPage() {
     const navigate = useNavigate();
+    const toast = useToast();
+
     const [id, setId] = useState("");
     const [pwd, setPwd] = useState("");
     const [fail, setFail] = useState(false);
@@ -36,24 +38,20 @@ function SignInPage() {
 
     useEffect(() => {
         const checkAlreadyLoggedIn = async () => {
-            if (getAccessToken()) {
-                navigate("/");
-                return;
-            }
             if (localStorage.getItem("userId")) {
                 try {
                     const res = await reissueToken();
-                    if (res?.success && res?.accessToken) {
+                    if (res?.success) {
                         navigate("/");
                     }
-                } catch {
-                    // 미로그인 상태
+                } catch (error) {
+                    toast.error(error || "다시 로그인해주세요.");
                 }
             }
         };
 
         checkAlreadyLoggedIn();
-    }, [navigate]);
+    }, [navigate, toast]);
 
     const handleIdChange = (e) => {
         setId(e.target.value);

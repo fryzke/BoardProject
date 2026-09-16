@@ -10,6 +10,7 @@ import MyPage from "./Pages/MyPage/MyPage";
 import ProtectedRoute from "./ProtectedRoutes";
 import { ToastProvider } from "./Components/Toast/ToastContext";
 import { ModalProvider } from "./Components/Modal/ModalContext";
+import SearchResultPage from './Pages/SearchResult/SearchResultPage';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<ForumPage />} />
+              <Route path="/search" element={<SearchResultPage />}/>
               <Route path="/sign-up" element={<SignUpPage />} />
               <Route path="/sign-in" element={<SignInPage />} />
               <Route path="/mypage" element={

@@ -110,6 +110,11 @@
     background-color: #111;
 }
 
+.comment-submit-btn:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+}
+
 .comment-cancel-btn {
     height: 36px;
     padding: 0 16px;

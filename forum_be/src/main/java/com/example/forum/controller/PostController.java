@@ -1,6 +1,7 @@
 package com.example.forum.controller;
 
 import com.example.forum.dto.PostDto;
+import com.example.forum.dto.PostListResponseDto;
 import com.example.forum.dto.PostResponseDto;
 import com.example.forum.dto.common.ApiResponse;
 import com.example.forum.service.PostService;
@@ -60,12 +61,14 @@ public class PostController {
      * 게시글 목록 조회
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PostResponseDto>>> getPosts(
+    public ResponseEntity<ApiResponse<List<PostListResponseDto>>> getPosts(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(defaultValue = "all") String category,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String option,
             @RequestParam(defaultValue = "latest") String sort) {
-        Page<PostResponseDto> data = postService.getPosts(page, limit, category, sort);
+        Page<PostListResponseDto> data = postService.getPosts(page, limit, category, keyword, option, sort);
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noCache().mustRevalidate())
                 .body(ApiResponse.ofPage(data.getContent(), data, "게시글 목록을 조회하였습니다."));

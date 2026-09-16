@@ -5,9 +5,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.forum.dto.FileRequestDto;
 
 public interface FileStorageServiceImpl {
+    String generateStoredName(String originalFilename);
     FileRequestDto storeFile(MultipartFile file);
     void savePhysicalFile(MultipartFile file, String storedName);
     String getAccessUrl(String storedName);
     void deleteFile(String storedName);
     Resource loadFileAsResource(String storedName);
+    void cleanupEmptyDirectories();
 }

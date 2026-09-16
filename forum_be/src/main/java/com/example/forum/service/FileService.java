@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.forum.domain.File;
 import com.example.forum.domain.Post;
 import com.example.forum.domain.User;
+import com.example.forum.dto.FileDownloadDto;
 import com.example.forum.dto.FileRequestDto;
 import com.example.forum.dto.FileResponseDto;
 import com.example.forum.dto.PostDto;
@@ -19,7 +20,6 @@ import com.example.forum.repository.PostRepository;
 import com.example.forum.repository.UserRepository;
 import com.example.forum.validator.FileValidator;
 
-import java.util.UUID;
 import org.springframework.web.multipart.MultipartFile;
 import com.example.forum.service.storage.FileStorageServiceImpl;
 
@@ -65,11 +65,7 @@ public class FileService {
 
         for (MultipartFile file : files) {
             String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
-            String storedName = UUID.randomUUID().toString() + extension;
+            String storedName = fileStorageService.generateStoredName(originalFilename);
             String accessUrl = fileStorageService.getAccessUrl(storedName);
 
             File fileEntity = File.builder()
@@ -154,6 +150,11 @@ public class FileService {
         eventPublisher.publishEvent(new FileDeleteEvent(file.getStoredName()));
     }
 
+    // 빈 유령 폴더 정리
+    public void cleanupEmptyDirectories() {
+        fileStorageService.cleanupEmptyDirectories();
+    }
+
     // postId 가 미연결된 파일 연결
     public void deleteUnlinkedFile(Post post, PostDto dto) {
         List<File> unlinkedFiles = fileRepository.findAllByAuthorAndPostIsNull(post.getAuthor());
@@ -190,11 +191,7 @@ public class FileService {
 
         String oldStoredName = fileEntity.getStoredName();
         String originalFilename = file.getOriginalFilename();
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        }
-        String newStoredName = UUID.randomUUID().toString() + extension;
+        String newStoredName = fileStorageService.generateStoredName(originalFilename);
         String newAccessUrl = fileStorageService.getAccessUrl(newStoredName);
 
         // 1) 메타데이터 변경 및 저장
@@ -217,7 +214,6 @@ public class FileService {
         return new FileResponseDto(fileEntity);
     }
 
-    public record FileDownloadDto(org.springframework.core.io.Resource resource, String originalName, String contentType) {}
 
     // 파일 다운로드 (ID 기준)
     @Transactional(readOnly = true)

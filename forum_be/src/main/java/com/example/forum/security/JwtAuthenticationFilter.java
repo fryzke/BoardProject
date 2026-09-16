@@ -2,9 +2,12 @@ package com.example.forum.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,14 +23,15 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BLACKLIST_PREFIX = "blacklist:";
+    private static final String ACCESS_TOKEN = "accessToken";
 
     private final JwtProvider jwtProvider;
-    private final org.springframework.data.redis.core.StringRedisTemplate stringRedisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
 
         String token = resolveToken(request);
 
@@ -38,12 +42,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String userId = jwtProvider.getUserIdFromToken(token);
                 String role = jwtProvider.getRoleFromToken(token);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userId,
-                                null,
-                                List.of(new SimpleGrantedAuthority(role))
-                        );
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userId,
+                        null,
+                        List.of(new SimpleGrantedAuthority(role)));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
@@ -52,13 +54,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-   /*
-   - 토큰값만 추출
-   */
+    /*
+     * - 토큰 추출
+     */
     private String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (ACCESS_TOKEN.equals(cookie.getName())) {
+                    String accessToken = cookie.getValue();
+                    if (StringUtils.hasText(accessToken)) {
+                        return accessToken;
+                    }
+                }
+            }
         }
         return null;
     }
