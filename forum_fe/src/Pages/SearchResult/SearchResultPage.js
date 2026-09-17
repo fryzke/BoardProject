@@ -1,10 +1,10 @@
 import './SearchResultPage.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import Pagination from '../Forum/Pagination';
 import { formatDate } from '../../utils';
-import { fetchPosts, logoutUser, reissueToken } from '../../api';
+import { fetchPosts, logoutUser } from '../../api';
 import { SortType, PaginationConfig } from '../../enum';
 import { useToast } from '../../Components/Toast/ToastContext';
 import SearchBar from '../../Components/Search/SearchBar';
@@ -22,6 +22,7 @@ function SearchResultPage() {
     const [totalPosts, setTotalPosts] = useState(0);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const [userName, setUserName] = useState("");
     const userGrade = localStorage.getItem("userGrade");
@@ -32,58 +33,48 @@ function SearchResultPage() {
             setUserName(storedUserName);
         }
 
-        const initAuth = async () => {
-            if (localStorage.getItem("userId")) {
-                try {
-                    const res = await reissueToken();
-                    if (res?.success) {
-                        setIsLoggedIn(true);
-                    }
-                } catch {
-                    // 미로그인 상태
-                }
-            }
-        };
-
-        initAuth();
+        if (localStorage.getItem("userId")) {
+            setIsLoggedIn(true);
+        }
     }, []);
+
+    const loadPosts = useCallback(async (signal) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await fetchPosts(
+                currentPage,
+                PaginationConfig.POSTS_PER_PAGE,
+                sort,
+                "all",
+                keyword,
+                option,
+                signal ? { signal } : {}
+            );
+            setPosts(result.data);
+            setTotalPages(result.pagination?.totalPages || 1);
+            setCurrentPage(result.pagination?.currentPage || 1);
+            setTotalPosts(result.pagination?.totalPosts || 0);
+        } catch (err) {
+            if (!axios.isCancel(err)) {
+                console.error("Failed to load search posts", err);
+                setError("검색 결과를 불러오는 도중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+            }
+        } finally {
+            if (!signal || !signal.aborted) {
+                setLoading(false);
+            }
+        }
+    }, [currentPage, keyword, option, sort]);
 
     useEffect(() => {
         const controller = new AbortController();
-
-        const loadPosts = async () => {
-            setLoading(true);
-            try {
-                const result = await fetchPosts(
-                    currentPage,
-                    PaginationConfig.POSTS_PER_PAGE,
-                    sort,
-                    "all",
-                    keyword,
-                    option,
-                    { signal: controller.signal }
-                );
-                setPosts(result.data);
-                setTotalPages(result.pagination.totalPages);
-                setCurrentPage(result.pagination.currentPage);
-                setTotalPosts(result.pagination.totalPosts);
-            } catch (error) {
-                if (!axios.isCancel(error)) {
-                    console.error("Failed to load posts", error);
-                }
-            } finally {
-                if (!controller.signal.aborted) {
-                    setLoading(false);
-                }
-            }
-        };
-
-        loadPosts();
+        loadPosts(controller.signal);
 
         return () => {
             controller.abort();
         };
-    }, [currentPage, keyword, option, sort]);
+    }, [loadPosts]);
 
     const handleAuthAction = async () => {
         if (isLoggedIn) {
@@ -109,6 +100,7 @@ function SearchResultPage() {
             navigate("/sign-in");
         }
     };
+
     return (
         <div className="SearchResult">
             <div className="SearchResultContainer">
@@ -177,13 +169,46 @@ function SearchResultPage() {
                             {loading ? (
                                 <tr>
                                     <td colSpan="6" className="EmptyMessage">
-                                        게시글을 불러오는 중입니다...
+                                        <div className="FeedbackLoading">
+                                            <div className="Spinner"></div>
+                                            <span>검색 결과를 불러오는 중입니다...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : error ? (
+                                <tr>
+                                    <td colSpan="6" className="FeedbackCell">
+                                        <div className="FeedbackCard ErrorCard">
+                                            <div className="FeedbackIcon">⚠️</div>
+                                            <h3 className="FeedbackTitle">검색 결과를 불러오지 못했습니다</h3>
+                                            <p className="FeedbackDesc">{error}</p>
+                                            <button className="RetryButton" onClick={() => loadPosts()}>
+                                                다시 시도
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : posts.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="EmptyMessage">
-                                        등록된 게시글이 없습니다.
+                                    <td colSpan="6" className="FeedbackCell">
+                                        <div className="FeedbackCard EmptyCard">
+                                            <div className="FeedbackIcon">🔍</div>
+                                            <h3 className="FeedbackTitle">
+                                                {keyword ? (
+                                                    <><strong>"{keyword}"</strong>에 대한 검색 결과가 없습니다.</>
+                                                ) : (
+                                                    <>등록된 검색 결과가 없습니다.</>
+                                                )}
+                                            </h3>
+                                            <div className="FeedbackTips">
+                                                <p className="TipsTitle">💡 검색 팁</p>
+                                                <ul>
+                                                    <li>단어의 철자가 정확한지 확인해 보세요.</li>
+                                                    <li>검색어의 단어 수를 줄이거나 보다 일반적인 키워드로 검색해 보세요.</li>
+                                                    <li>검색 조건(제목/본문/제목+본문)을 다시 한번 확인해 보세요.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : (
@@ -204,8 +229,16 @@ function SearchResultPage() {
                                             </td>
                                             <td className="TdCategory">{post.category}</td>
                                             <td className="TdTitle">
-                                                {isPinned && <span className="PinnedTitleTag">[고정]</span>}
-                                                <span className="TitleText">{post.title}</span>
+                                                <div className="TitleWrapper">
+                                                    {isPinned && <span className="PinnedTitleTag">[고정]</span>}
+                                                    <span className="TitleText">{post.title}</span>
+                                                    {post.commentCount > 0 && (
+                                                        <span className="CommentBadge" title={`댓글 ${post.commentCount}개`}>
+                                                            <span className="CommentIcon">💬</span>
+                                                            <span className="CommentCountNumber">{post.commentCount}</span>
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="TdAuthor">{post.author || '-'}</td>
                                             <td className="TdDate">{formatDate(post.createdAt || post.date)}</td>

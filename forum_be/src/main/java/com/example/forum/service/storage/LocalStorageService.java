@@ -2,7 +2,10 @@ package com.example.forum.service.storage;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -58,15 +61,29 @@ public class LocalStorageService implements FileStorageServiceImpl {
             throw new IllegalArgumentException("업로드할 파일이 없습니다.");
         }
 
+        Path targetPath = Paths.get(uploadDir, storedName).toAbsolutePath().normalize();
+        Path parentDir = targetPath.getParent();
+
         try {
-            Path targetPath = Paths.get(uploadDir, storedName).toAbsolutePath().normalize();
-            if (targetPath.getParent() != null) {
-                Files.createDirectories(targetPath.getParent());
+            if (parentDir != null && !Files.exists(parentDir)) {
+                Files.createDirectories(parentDir);
             }
 
             file.transferTo(targetPath.toFile());
             log.info("물리 파일 저장 완료: {}", targetPath);
         } catch (IOException e) {
+            // 동시성으로 인해 상위 폴더가 삭제되었을 경우 1회 재생성 후 재시도
+            try {
+                if (parentDir != null && !Files.exists(parentDir)) {
+                    Files.createDirectories(parentDir);
+                    file.transferTo(targetPath.toFile());
+                    log.info("물리 파일 재시도 저장 완료: {}", targetPath);
+                    return;
+                }
+            } catch (IOException retryEx) {
+                log.error("물리 파일 재시도 저장 실패: {}", retryEx.getMessage());
+            }
+
             log.error("물리 파일 저장 실패: {}", e.getMessage());
             throw new RuntimeException("파일 물리 저장 중 오류가 발생했습니다.", e);
         }
@@ -123,6 +140,8 @@ public class LocalStorageService implements FileStorageServiceImpl {
             } else {
                 log.warn("삭제할 물리 파일이 존재하지 않습니다: {}", filePath);
             }
+        } catch (java.nio.file.NoSuchFileException e) {
+            log.info("동시성: 이미 다른 스레드에 의해 삭제된 파일입니다: {}", filePath);
         } catch (IOException e) {
             log.error("물리 파일 삭제 실패: {} | 원인: {}", filePath, e.getMessage());
             throw new RuntimeException("물리 파일 삭제 실패: " + storedName, e);
@@ -131,6 +150,7 @@ public class LocalStorageService implements FileStorageServiceImpl {
 
     /**
      * 파일 삭제 후 남은 빈 상위 디렉터리(유령 폴더)들을 uploadDir 전까지 순차적으로 삭제
+     * 동시성 고려: DirectoryNotEmptyException, NoSuchFileException 등 안전하게 격리
      */
     private void deleteEmptyParentDirectories(Path filePath) {
         try {
@@ -141,9 +161,21 @@ public class LocalStorageService implements FileStorageServiceImpl {
                 if (Files.exists(parent) && Files.isDirectory(parent)) {
                     try (var stream = Files.list(parent)) {
                         if (stream.findAny().isEmpty()) {
-                            Files.delete(parent);
-                            log.info("빈 유령 폴더 삭제 완료: {}", parent);
-                            parent = parent.getParent();
+                            try {
+                                Files.delete(parent);
+                                log.info("빈 유령 폴더 삭제 완료: {}", parent);
+                                parent = parent.getParent();
+                            } catch (DirectoryNotEmptyException e) {
+                                // 다른 스레드에서 동시에 파일을 저장함 -> 삭제 중단
+                                log.debug("동시성: 폴더 내 파일이 생성되어 삭제를 중단합니다: {}", parent);
+                                break;
+                            } catch (NoSuchFileException e) {
+                                // 이미 다른 스레드가 삭제함
+                                break;
+                            } catch (FileSystemException e) {
+                                log.warn("파일 시스템 락으로 인해 폴더 삭제를 건너뜁니다: {}", parent);
+                                break;
+                            }
                         } else {
                             break;
                         }
@@ -198,11 +230,16 @@ public class LocalStorageService implements FileStorageServiceImpl {
                         .forEach(dir -> {
                             try (var childStream = Files.list(dir)) {
                                 if (childStream.findAny().isEmpty()) {
-                                    Files.delete(dir);
-                                    log.info("스케줄러: 빈 유령 폴더 정리 완료: {}", dir);
+                                    try {
+                                        Files.delete(dir);
+                                        log.info("스케줄러: 빈 유령 폴더 정리 완료: {}", dir);
+                                    } catch (java.nio.file.DirectoryNotEmptyException e) {
+                                        log.debug("스케줄러 동시성: 폴더 내 파일 생성 감지로 삭제 건너뜀: {}", dir);
+                                    } catch (java.nio.file.NoSuchFileException ignored) {
+                                    }
                                 }
                             } catch (IOException e) {
-                                log.warn("빈 폴더 삭제 실패: {}", dir, e);
+                                log.warn("빈 폴더 확인/삭제 실패: {}", dir, e);
                             }
                         });
             }

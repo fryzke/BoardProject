@@ -2,7 +2,7 @@ import "./SignInPage.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../Components/Toast/ToastContext";
-import { loginUser, reissueToken } from "../../api";
+import { loginUser } from "../../api";
 
 async function handleLogin(id, pwd, valid, navigate, setFail) {
     if (valid) {
@@ -37,21 +37,10 @@ function SignInPage() {
     const isFormValid = id.trim().length > 0 && pwd.length > 0;
 
     useEffect(() => {
-        const checkAlreadyLoggedIn = async () => {
-            if (localStorage.getItem("userId")) {
-                try {
-                    const res = await reissueToken();
-                    if (res?.success) {
-                        navigate("/");
-                    }
-                } catch (error) {
-                    toast.error(error || "다시 로그인해주세요.");
-                }
-            }
-        };
-
-        checkAlreadyLoggedIn();
-    }, [navigate, toast]);
+        if (localStorage.getItem("userId")) {
+            navigate("/");
+        }
+    }, [navigate]);
 
     const handleIdChange = (e) => {
         setId(e.target.value);

@@ -293,6 +293,13 @@
     padding-left: 20px !important;
 }
 
+.TitleWrapper {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    gap: 8px;
+}
+
 .TitleText {
     display: inline-block;
     max-width: 100%;
@@ -307,6 +314,39 @@
 .PostRow:hover .TitleText {
     color: #0056b3;
     text-decoration: underline;
+}
+
+/* 댓글 수 뱃지 스타일 */
+.CommentBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    vertical-align: middle;
+    line-height: 1.2;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+
+.PostRow:hover .CommentBadge {
+    background-color: #e0e7ff;
+    border-color: #c7d2fe;
+    color: #3730a3;
+}
+
+.CommentIcon {
+    font-size: 10px;
+}
+
+.CommentCountNumber {
+    font-size: 11px;
+    font-weight: 700;
 }
 
 .TdAuthor {

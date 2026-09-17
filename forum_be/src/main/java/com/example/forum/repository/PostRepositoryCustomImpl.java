@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
+import com.example.forum.domain.Category;
 import com.example.forum.domain.Post;
 import com.example.forum.domain.QPost;
 import com.querydsl.core.BooleanBuilder;
@@ -25,72 +26,58 @@ public class PostRepositoryCustomImpl implements PostRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Post> findByTitleContainingIgnoreCase(String[] keywords, Pageable pageable) {
+    public Page<Post> searchPosts(Category category, String[] keywords, String option, Pageable pageable) {
         BooleanBuilder builder = new BooleanBuilder();
         QPost post = QPost.post;
-        for (String keyword : keywords) {
-            builder.or(post.title.containsIgnoreCase(keyword));
+
+        if (category != null) {
+            builder.and(post.category.eq(category));
+        }
+
+        if (keywords != null && keywords.length > 0 && option != null) {
+            BooleanBuilder keywordBuilder = new BooleanBuilder();
+            for (String keyword : keywords) {
+                if (keyword == null || keyword.isBlank()) continue;
+                switch (option.toLowerCase()) {
+                    case "title" -> keywordBuilder.or(post.title.containsIgnoreCase(keyword));
+                    case "content" -> keywordBuilder.or(post.plainContent.containsIgnoreCase(keyword));
+                    default -> keywordBuilder.or(post.title.containsIgnoreCase(keyword))
+                                             .or(post.plainContent.containsIgnoreCase(keyword));
+                }
+            }
+            builder.and(keywordBuilder);
         }
 
         List<Post> fetch = queryFactory
                 .selectFrom(post)
+                .leftJoin(post.author).fetchJoin()
                 .where(builder)
                 .orderBy(getOrderSpecifiers(pageable, post))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+
         JPAQuery<Long> count = queryFactory
                 .select(post.count())
                 .from(post)
                 .where(builder);
 
         return PageableExecutionUtils.getPage(fetch, pageable, count::fetchOne);
+    }
+
+    @Override
+    public Page<Post> findByTitleContainingIgnoreCase(String[] keywords, Pageable pageable) {
+        return searchPosts(null, keywords, "title", pageable);
     }
 
     @Override
     public Page<Post> findByContentContainingIgnoreCase(String[] keywords, Pageable pageable) {
-        BooleanBuilder builder = new BooleanBuilder();
-        QPost post = QPost.post;
-        for (String keyword : keywords) {
-            builder.or(post.content.containsIgnoreCase(keyword));
-        }
-
-        List<Post> fetch = queryFactory
-                .selectFrom(post)
-                .where(builder)
-                .orderBy(getOrderSpecifiers(pageable, post))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-        JPAQuery<Long> count = queryFactory
-                .select(post.count())
-                .from(post)
-                .where(builder);
-
-        return PageableExecutionUtils.getPage(fetch, pageable, count::fetchOne);
+        return searchPosts(null, keywords, "content", pageable);
     }
 
     @Override
     public Page<Post> findByTitleOrContentContainingIgnoreCase(String[] keywords, Pageable pageable) {
-        BooleanBuilder builder = new BooleanBuilder();
-        QPost post = QPost.post;
-        for (String keyword : keywords) {
-            builder.or(post.content.containsIgnoreCase(keyword)).or(post.title.containsIgnoreCase(keyword));
-        }
-
-        List<Post> fetch = queryFactory
-                .selectFrom(post)
-                .where(builder)
-                .orderBy(getOrderSpecifiers(pageable, post))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-        JPAQuery<Long> count = queryFactory
-                .select(post.count())
-                .from(post)
-                .where(builder);
-
-        return PageableExecutionUtils.getPage(fetch, pageable, count::fetchOne);
+        return searchPosts(null, keywords, "both", pageable);
     }
 
     private OrderSpecifier<?>[] getOrderSpecifiers(Pageable pageable, QPost post) {

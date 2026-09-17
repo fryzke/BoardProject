@@ -275,6 +275,13 @@
     padding-left: 20px !important;
 }
 
+.TitleWrapper {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    gap: 8px;
+}
+
 .TitleText {
     display: inline-block;
     max-width: 100%;
@@ -289,6 +296,39 @@
 .PostRow:hover .TitleText {
     color: #0056b3;
     text-decoration: underline;
+}
+
+/* 댓글 수 뱃지 스타일 */
+.CommentBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    vertical-align: middle;
+    line-height: 1.2;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+
+.PostRow:hover .CommentBadge {
+    background-color: #e0e7ff;
+    border-color: #c7d2fe;
+    color: #3730a3;
+}
+
+.CommentIcon {
+    font-size: 10px;
+}
+
+.CommentCountNumber {
+    font-size: 11px;
+    font-weight: 700;
 }
 
 .TdAuthor {
@@ -312,6 +352,112 @@
     padding: 60px 0 !important;
     color: #888;
     font-size: 15px;
+}
+
+/* 피드백 영역 (로딩, 에러, 결과 없음) */
+.FeedbackCell {
+    padding: 48px 24px !important;
+    background-color: #fafbfc;
+}
+
+.FeedbackCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.FeedbackIcon {
+    font-size: 38px;
+    margin-bottom: 12px;
+}
+
+.FeedbackTitle {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+}
+
+.FeedbackDesc {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0 0 16px 0;
+}
+
+.RetryButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 20px;
+    background-color: #2b3a4a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.RetryButton:hover {
+    background-color: #1e2834;
+}
+
+.FeedbackTips {
+    margin-top: 16px;
+    padding: 16px 24px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    text-align: left;
+    max-width: 480px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.TipsTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    margin: 0 0 8px 0;
+}
+
+.FeedbackTips ul {
+    margin: 0;
+    padding-left: 18px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.FeedbackTips li {
+    margin-bottom: 4px;
+}
+
+.FeedbackLoading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.Spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid #e2e8f0;
+    border-top: 3px solid #2b3a4a;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* 푸터 및 페이지네이션 */

@@ -12,6 +12,7 @@ import com.example.forum.event.FileDeleteEvent;
 import com.example.forum.repository.FileRepository;
 import com.example.forum.repository.PostRepository;
 import com.example.forum.repository.UserRepository;
+import com.example.forum.utils.HtmlUtils;
 import com.example.forum.validator.PostValidator;
 
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,7 @@ public class PostService {
                 .title(dto.getTitle().trim())
                 .category(dto.getCategory())
                 .content(dto.getContent().trim())
+                .plainContent(HtmlUtils.removeTag(dto.getContent()))
                 .author(author)
                 .isPinned(dto.isPinned())
                 .build();
@@ -99,12 +101,15 @@ public class PostService {
             String sort) {
         int pageIndex = Math.max(0, page - 1);
 
-        Pageable pageable = sort.equalsIgnoreCase("latest")
-                ? PageRequest.of(pageIndex, size, Sort.by(Sort.Order.desc("isPinned"),
-                        Sort.Order.desc("createdAt")))
-                : PageRequest.of(pageIndex, size, Sort.by(Sort.Order.desc("isPinned"),
-                        Sort.Order.desc("viewCount")));
+        Sort.Order pinOrder = Sort.Order.desc("isPinned");
+        Sort sortOrder;
+        if (sort != null && (sort.equalsIgnoreCase("popular") || sort.equalsIgnoreCase("views") || sort.equalsIgnoreCase("viewCount"))) {
+            sortOrder = Sort.by(pinOrder, Sort.Order.desc("viewCount"), Sort.Order.desc("createdAt"));
+        } else {
+            sortOrder = Sort.by(pinOrder, Sort.Order.desc("createdAt"));
+        }
 
+        Pageable pageable = PageRequest.of(pageIndex, size, sortOrder);
         Page<Post> postPage = searchPosts(category, keyword, option, pageable);
 
         List<PostListResponseDto> content = postPage.stream().map(PostListResponseDto::new).toList();
@@ -112,28 +117,23 @@ public class PostService {
     }
 
     private Page<Post> searchPosts(String category, String keyword, String option, Pageable pageable) {
-        if (!"all".equalsIgnoreCase(category)) {
-            return postRepository.findByCategory(Category.deserialize(category), pageable);
-        }
+        String[] searchKeywords = (keyword != null && !keyword.isBlank())
+                ? tokenize(keyword)
+                : null;
 
-        if (keyword == null || option == null) {
-            return postRepository.findAll(pageable);
-        }
+        // 검색 시에는 전체 게시글을 대상으로 검색, 일반 목록 조회 시에만 카테고리 필터 적용
+        Category targetCategory = (searchKeywords == null && category != null && !"all".equalsIgnoreCase(category))
+                ? Category.deserialize(category)
+                : null;
 
-        String[] searchKeyword = tokenize(keyword);
-
-        return switch (option.toLowerCase()) {
-            case "title" -> postRepository.findByTitleContainingIgnoreCase(searchKeyword, pageable);
-            case "content" -> postRepository.findByContentContainingIgnoreCase(searchKeyword, pageable);
-            default -> postRepository.findByTitleOrContentContainingIgnoreCase(searchKeyword, pageable);
-        };
+        return postRepository.searchPosts(targetCategory, searchKeywords, option, pageable);
     }
 
     private String[] tokenize(String keyword){
-        if(keyword.isBlank()){
-            throw new IllegalArgumentException("검색어를 입력해주세요.");
+        if(keyword == null || keyword.isBlank()){
+            return new String[0];
         }
-        return keyword.trim().replace("\\s+"," ").split(" ");
+        return keyword.trim().replaceAll("\\s+"," ").split(" ");
     }
 
     // 게시글 삭제 (물리 파일 삭제 이벤트 발행)

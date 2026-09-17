@@ -8,6 +8,7 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 import com.example.forum.domain.common.BaseEntity;
+import com.example.forum.utils.HtmlUtils;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -40,6 +41,9 @@ public class Post extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Column(name = "plain_content", columnDefinition = "TEXT")
+    private String plainContent;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User author;
@@ -60,8 +64,6 @@ public class Post extends BaseEntity {
     @Column(name = "view_count", nullable = false)
     private int viewCount = 0;
 
-
-    
     @Builder.Default
     @Column(name= "comment_count", nullable = false)
     private int commentCount = 0;
@@ -72,7 +74,10 @@ public class Post extends BaseEntity {
     public void update(String title, Category category, String content, boolean isPinned) {
         if (title != null) this.title = title;
         if (category != null) this.category = category;
-        if (content != null) this.content = content;
+        if (content != null) {
+            this.content = content;
+            this.plainContent = HtmlUtils.removeTag(content);
+        }
         this.isPinned = isPinned;
     }
 
@@ -88,19 +93,25 @@ public class Post extends BaseEntity {
         this.viewCount++;
     }
 
-    
     public void increaseCommentCount() {
         this.commentCount++;
     }
+
     public void decreaseCommentCount() {
-        this.commentCount--;
+        this.commentCount = Math.max(0, this.commentCount - 1);
     }
-    
+
+    @PrePersist
+    @PreUpdate
+    public void syncPlainContent() {
+        if (this.content != null) {
+            this.plainContent = HtmlUtils.removeTag(this.content);
+        }
+    }
 
     @PreRemove
     public void onPreRemove() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
     }
-
 }

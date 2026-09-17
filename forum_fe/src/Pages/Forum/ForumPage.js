@@ -4,7 +4,7 @@ import axios from 'axios';
 import './ForumPage.css';
 import Pagination from './Pagination';
 import { formatDate } from '../../utils';
-import { fetchPosts, logoutUser, reissueToken } from '../../api';
+import { fetchPosts, logoutUser } from '../../api';
 import { Category, SortType, PaginationConfig } from '../../enum';
 import { useToast } from '../../Components/Toast/ToastContext';
 import SearchBar from '../../Components/Search/SearchBar';
@@ -30,20 +30,9 @@ function ForumPage() {
             setUserName(storedUserName);
         }
 
-        const initAuth = async () => {
-            if (localStorage.getItem("userId")) {
-                try {
-                    const res = await reissueToken();
-                    if (res?.success) {
-                        setIsLoggedIn(true);
-                    }
-                } catch {
-                    // 미로그인 상태
-                }
-            }
-        };
-
-        initAuth();
+        if (localStorage.getItem("userId")) {
+            setIsLoggedIn(true);
+        }
     }, []);
 
     useEffect(() => {
@@ -219,8 +208,16 @@ function ForumPage() {
                                             </td>
                                             <td className="TdCategory">{post.category}</td>
                                             <td className="TdTitle">
-                                                {isPinned && <span className="PinnedTitleTag">[고정]</span>}
-                                                <span className="TitleText">{post.title} {post.commentCount > 0 && `[${post.commentCount}]`}</span>
+                                                <div className="TitleWrapper">
+                                                    {isPinned && <span className="PinnedTitleTag">[고정]</span>}
+                                                    <span className="TitleText">{post.title}</span>
+                                                    {post.commentCount > 0 && (
+                                                        <span className="CommentBadge" title={`댓글 ${post.commentCount}개`}>
+                                                            <span className="CommentIcon">💬</span>
+                                                            <span className="CommentCountNumber">{post.commentCount}</span>
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="TdAuthor">{post.author || '-'}</td>
                                             <td className="TdDate">{formatDate(post.createdAt || post.date)}</td>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatDate, formatDetailContent } from '../../utils';
-import { getPost, deletePost, reissueToken } from '../../api';
+import { getPost, deletePost } from '../../api';
 import './PostDetailPage.css';
 import parse from 'html-react-parser';
 import CommentSection from './CommentSection';
@@ -20,20 +20,9 @@ function PostDetailPage() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
-        const initAuth = async () => {
-            if (localStorage.getItem("userId")) {
-                try {
-                    const res = await reissueToken();
-                    if (res?.success) {
-                        setIsLoggedIn(true);
-                    }
-                } catch {
-                    // 미로그인 상태
-                }
-            }
-        };
-
-        initAuth();
+        if (localStorage.getItem("userId")) {
+            setIsLoggedIn(true);
+        }
 
         const controller = new AbortController();
 
