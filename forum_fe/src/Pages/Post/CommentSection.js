@@ -12,10 +12,10 @@ function CommentSection({ postId, isLoggedIn, currentUserId }) {
     const [totalPages, setTotalPages] = useState(1);
     const [totalComments, setTotalComments] = useState(0);
 
-    const fetchComments = useCallback(async (page = 1) => {
+    const fetchComments = useCallback(async (page = 1, signal) => {
         if (!postId) return;
         try {
-            const result = await getComments(postId, page, PaginationConfig.COMMENTS_PER_PAGE);
+            const result = await getComments(postId, page, PaginationConfig.COMMENTS_PER_PAGE, signal ? { signal } : {});
             setComments(result.data || []);
             if (result.pagination) {
                 setTotalPages(result.pagination.totalPages);
@@ -29,9 +29,15 @@ function CommentSection({ postId, isLoggedIn, currentUserId }) {
     }, [postId]);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         if (postId) {
-            fetchComments(currentPage);
+            fetchComments(currentPage, controller.signal);
         }
+
+        return () => {
+            controller.abort();
+        };
     }, [postId, currentPage, fetchComments]);
 
     const handlePageChange = (newPage) => {

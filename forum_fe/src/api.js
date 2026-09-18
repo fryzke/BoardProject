@@ -28,6 +28,11 @@ const processQueue = (error, token = null) => {
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
+        // 요청 취소(AbortController)인 경우, 에러 처리 없이 조용히 reject
+        if (axios.isCancel(error)) {
+            return Promise.reject(error);
+        }
+
         const originalRequest = error.config;
 
         // 401 에러이고 재발급 요청 자체가 아닌 경우 Refresh Token 쿠키로 자동 재발급 시도
@@ -160,7 +165,7 @@ export const fetchPosts = async (page = 1, limit = 20, sort = "latest", category
 
     } catch (error) {
         if (axios.isCancel(error)) {
-            throw error;
+            return { data: [], pagination: null };
         }
         console.error("Fetch posts error:", error);
         throw error;
@@ -176,7 +181,7 @@ export const getPost = async (id, options = {}) => {
         return response.data;
     } catch (error) {
         if (axios.isCancel(error)) {
-            throw error;
+            return null;
         }
         console.error("Get post error:", error);
         throw error;
@@ -320,7 +325,7 @@ export const getComments = async (postId, page = 1, limit = 10, options = {}) =>
         };
     } catch (error) {
         if (axios.isCancel(error)) {
-            throw error;
+            return { data: [], pagination: null };
         }
         console.error("Get comments error:", error);
         throw error;

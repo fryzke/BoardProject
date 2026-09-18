@@ -29,7 +29,9 @@ function PostDetailPage() {
         const fetchPostDetail = async () => {
             try {
                 const data = await getPost(id, { signal: controller.signal });
-                setPost(data);
+                if (data) {
+                    setPost(data);
+                }
             } catch (error) {
                 if (!axios.isCancel(error)) {
                     toast.error("게시글을 불러올 수 없습니다.");

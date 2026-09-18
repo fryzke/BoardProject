@@ -52,6 +52,8 @@ function ForumPage() {
                     PaginationConfig.POSTS_PER_PAGE,
                     sort,
                     category,
+                    null,
+                    null,
                     { signal: controller.signal }
                 );
                 setPosts(result.data);

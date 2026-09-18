@@ -39,10 +39,10 @@ public class PostRepositoryCustomImpl implements PostRepositoryCustom {
             for (String keyword : keywords) {
                 if (keyword == null || keyword.isBlank()) continue;
                 switch (option.toLowerCase()) {
-                    case "title" -> keywordBuilder.or(post.title.containsIgnoreCase(keyword));
-                    case "content" -> keywordBuilder.or(post.plainContent.containsIgnoreCase(keyword));
-                    default -> keywordBuilder.or(post.title.containsIgnoreCase(keyword))
-                                             .or(post.plainContent.containsIgnoreCase(keyword));
+                    case "title" -> keywordBuilder.and(post.title.containsIgnoreCase(keyword));
+                    case "content" -> keywordBuilder.and(post.plainContent.containsIgnoreCase(keyword));
+                    default -> keywordBuilder.and(post.title.containsIgnoreCase(keyword)
+                                             .or(post.plainContent.containsIgnoreCase(keyword)));
                 }
             }
             builder.and(keywordBuilder);

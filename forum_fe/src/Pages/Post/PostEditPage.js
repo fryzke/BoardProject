@@ -37,6 +37,7 @@ function PostEditPage() {
             const fetchPost = async () => {
                 try {
                     const data = await getPost(id, { signal: controller.signal });
+                    if (!data) return;
                     if (userId !== data.author) {
                         toast.error("본인 게시글만 수정할 수 있습니다.");
                         navigate("/");

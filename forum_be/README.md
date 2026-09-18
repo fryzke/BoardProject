@@ -12,6 +12,7 @@ Spring Boot 3 및 Java 21 기반의 포럼/게시판 RESTful API 백엔드 서�
 - **Database & Persistence**:
   - MySQL 8.x
   - Spring Data JPA & Hibernate
+  - QueryDSL 5.0 (동적 쿼리 및 다중 키워드 AND 정확도 검색)
   - Soft Delete (`@SQLDelete`, `@SQLRestriction`)
 - **Caching & Session**: Redis (`spring-boot-starter-data-redis`)
 - **Security & Authentication**:
@@ -30,11 +31,13 @@ Spring Boot 3 및 Java 21 기반의 포럼/게시판 RESTful API 백엔드 서�
 
 1. **Redis 기반 Refresh Token & 세션 관리**
    - Refresh Token을 Redis 인메모리 저장소에 TTL과 함께 저장하여 토큰 탈취 방지 및 빠른 만료 처리
-2. **커스텀 Bean Validation 어노테이션**
-   - `@ValidPassword`, `@ValidEmail` 등 커스텀 유효성 검증 어노테이션을 통해 DTO 레벨에서 일관된 검증 수행
-3. **비동기 등급(Grade) 산정 시스템**
+2. **QueryDSL 기반 다중 키워드 AND 검색**
+   - 사용자 입력 키워드 배열에 대해 `BooleanBuilder`를 활용한 AND 연산 동적 쿼리로 정확도 높은 검색 결과 제공
+3. **커스텀 Bean Validation & 보안 에러 핸들링**
+   - 커스텀 어노테이션(`@ValidUserId`, `@ValidUserName`, `@ValidPostTitle` 등) 및 전역 예외 처리(`@RestControllerAdvice`)로 내부 인프라/스택 트레이스 노출 차단
+4. **비동기 등급(Grade) 산정 시스템**
    - 사용자의 게시글/댓글 작성 및 삭제 시 `@Async` 비동기 워커를 통해 BRONZE / SILVER / GOLD 등급 자동 갱신
-4. **파일 업로드 & 고아 파일 정리 파이프라인**
+5. **파일 업로드 & 고아 파일 정리 파이프라인**
    - 파일 유효성 검증(확장자, 용량) 및 메타데이터 관리
    - 매일 배치 스케줄러(`FileCleanupScheduler`)를 통해 게시글과 연결되지 않은 임시 파일 자동 정리
 
