@@ -25,7 +25,7 @@ public class CommentResponseDto {
     public CommentResponseDto(Comment comment) {
         this.id = comment.getId();
         this.content = comment.isDeleted() ? "삭제된 댓글입니다." : comment.getContent();
-        this.author = comment.getAuthor().getUserId();
+        this.author = (comment.getAuthor() == null || comment.getAuthor().isDeleted()) ? "탈퇴된 회원" : comment.getAuthor().getUserId();
         this.createdAt = comment.getCreatedAt();
         this.isDeleted = comment.isDeleted();
         this.children = new ArrayList<>();

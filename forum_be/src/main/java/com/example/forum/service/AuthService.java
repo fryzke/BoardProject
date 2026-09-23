@@ -69,6 +69,10 @@ public class AuthService {
     public JwtTokenDto login(LoginDto dto) {
         User user = userRepository.findByUserId(dto.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+        
+        if (user.isDeleted()) {
+            throw new IllegalArgumentException("탈퇴한 회원입니다.");
+        }
 
         if (!passwordEncoder.matches(dto.getUserPassword(), user.getUserPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
@@ -92,7 +96,7 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public User getUser(String userId) {
-        return userRepository.findByUserId(userId).orElse(null);
+        return userRepository.findByUserId(userId).filter(u -> !u.isDeleted()).orElse(null);
     }
 
     /**
@@ -145,6 +149,11 @@ public class AuthService {
         // 4. 새 토큰 생성 및 Redis 갱신
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+
+        if (user.isDeleted()) {
+            throw new IllegalArgumentException("탈퇴한 회원입니다.");
+        }
+
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 user.getUserId(), null, List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
         JwtTokenDto newTokenDto = jwtProvider.createToken(authentication);

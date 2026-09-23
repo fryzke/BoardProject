@@ -8,6 +8,7 @@ export default function SearchBar() {
     const [searchParams] = useSearchParams();
     const [keyword, setKeyword] = useState(searchParams.get('keyword') || "");
     const [option, setOption] = useState(searchParams.get('option') || searchOption.TITLE);
+    const isValid = keyword.trim() && keyword.trim().length > 0;
 
     useEffect(() => {
         setKeyword(searchParams.get('keyword') || "");
@@ -37,7 +38,7 @@ export default function SearchBar() {
                 onChange={(e) => setOption(e.target.value)}
             >
                 <option value={searchOption.TITLE}>제목</option>
-                <option value={searchOption.COTENT}>본문</option>
+                <option value={searchOption.CONTENT}>본문</option>
                 <option value={searchOption.BOTH}>제목+본문</option>
             </select>
             <input
@@ -52,6 +53,7 @@ export default function SearchBar() {
             <button
                 className="SearchButton"
                 type="button"
+                disabled={!isValid}
                 onClick={handleSearch}
             >
                 검색

@@ -151,6 +151,21 @@ export const updateUserInfo = async (userData) => {
     }
 };
 
+export const deleteUser = async (userPassword) => {
+    try {
+        const response = await api.delete('/users/withdraw', {
+            data: userPassword,
+            headers: {
+                'Content-Type': 'text/plain',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Delete user account error:", error);
+        throw error;
+    }
+};
+
 // ===== Post APIs (백엔드 실제 연동) =====
 
 export const fetchPosts = async (page = 1, limit = 20, sort = "latest", category = "all", keyword = null, option = null, options = {}) => {

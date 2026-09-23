@@ -27,6 +27,7 @@ public class PostResponseDto {
 
     private LocalDateTime createdAt;
     private int viewCount;
+    private boolean isDeleted;
     private List<FileResponseDto> files;
     private int fileCount;
 
@@ -40,7 +41,7 @@ public class PostResponseDto {
         this.category = post.getCategory().getName();
         this.content = post.getContent();
         this.isPinned = post.isPinned();
-        this.author = post.getAuthor().getUserId();
+        this.author = (post.getAuthor() == null || post.getAuthor().isDeleted()) ? "탈퇴한 회원" : post.getAuthor().getUserId();
         this.createdAt = post.getCreatedAt();
         this.viewCount = post.getViewCount();
         if (files != null) {

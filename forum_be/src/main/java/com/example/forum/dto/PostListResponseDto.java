@@ -30,7 +30,7 @@ public class PostListResponseDto {
         this.title = post.getTitle();
         this.category = post.getCategory().getName();
         this.isPinned = post.isPinned();
-        this.author = post.getAuthor().getUserId();
+        this.author = (post.getAuthor() == null || post.getAuthor().isDeleted()) ? "탈퇴한 회원" : post.getAuthor().getUserId();
         this.createdAt = post.getCreatedAt();
         this.viewCount = post.getViewCount();
         this.commentCount = post.getCommentCount();

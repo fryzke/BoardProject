@@ -196,7 +196,7 @@
 }
 
 /* 회원 정보 수정 카드 */
-.EditSectionCard {
+.SectionCard {
     padding: 24px;
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
@@ -286,6 +286,106 @@
     cursor: not-allowed;
 }
 
+/* 회원탈퇴 섹션 (Danger Zone) */
+.SectionCard--danger {
+    border-color: #fee2e2;
+    background-color: #ffffff;
+}
+
+.SectionTitle--danger {
+    color: #991b1b;
+    border-bottom-color: #fee2e2;
+}
+
+.WithdrawContent {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.WithdrawNotice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background-color: #fef2f2;
+    border: 1px solid #fee2e2;
+    border-radius: 10px;
+}
+
+.WithdrawNoticeIcon {
+    color: #ef4444;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.WithdrawNoticeText {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.WithdrawNoticeTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #991b1b;
+    margin: 0;
+}
+
+.WithdrawNoticeDesc {
+    font-size: 13px;
+    color: #7f1d1d;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.WithdrawActions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.WithdrawButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #dc2626;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.WithdrawButton:hover {
+    background-color: #ef4444;
+    border-color: #ef4444;
+    color: #ffffff;
+}
+
+.WithdrawButton:active {
+    background-color: #dc2626;
+}
+
+/* 회원탈퇴 모달 스타일 */
+.WithdrawModalBody {
+    display: flex;
+    flex-direction: column;
+}
+
+.WithdrawModalWarning {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.WithdrawModalWarning strong {
+    color: #0f172a;
+}
+
 /* 하단 로그아웃 영역 */
 .MyPageFooter {
     display: flex;
@@ -300,15 +400,16 @@
     padding: 10px 18px;
     font-size: 14px;
     font-weight: 600;
-    color: #ef4444;
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
+    color: #64748b;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .LogoutButtonSecondary:hover {
-    background-color: #fee2e2;
-    border-color: #fca5a5;
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
 }

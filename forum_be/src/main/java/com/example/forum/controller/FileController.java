@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriUtils;
 
+import com.example.forum.annotation.RateLimit;
 import com.example.forum.dto.FileDownloadDto;
 import com.example.forum.dto.FileResponseDto;
 import com.example.forum.dto.common.ApiResponse;
@@ -28,17 +29,18 @@ import com.example.forum.service.FileService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping({ "/api/files"}) 
+@RequestMapping({ "/api/files" })
 @RequiredArgsConstructor
 public class FileController {
 
     private final FileService fileService;
 
     /*
-     * POST /api/files/upload 
+     * POST /api/files/upload
      * 파일/이미지 통합 업로드 (단건 및 다중 업로드 지원)
      */
     @PostMapping("/upload")
+    @RateLimit(capacity = 30, refillRate = 2, requested = 10)
     public ResponseEntity<ApiResponse<?>> uploadFile(
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "files", required = false) List<MultipartFile> files,
@@ -57,20 +59,22 @@ public class FileController {
     }
 
     /*
-     * GET /api/files/{postId} 
+     * GET /api/files/{postId}
      * 게시글에 첨부된 파일 목록 조회
      */
     @GetMapping("/{postId}")
+    @RateLimit(capacity = 50, refillRate = 5, requested = 1)
     public ResponseEntity<ApiResponse<List<FileResponseDto>>> getFiles(@PathVariable Long postId) {
         List<FileResponseDto> response = fileService.getFiles(postId);
         return ResponseEntity.ok(ApiResponse.success(response, "파일 목록을 성공적으로 조회하였습니다."));
     }
 
     /*
-     * PUT /api/files/{fileId} 
+     * PUT /api/files/{fileId}
      * 파일 수정 (새 파일로 교체: 메타데이터 수정 -> 2차 검증 -> 물리 파일 저장)
      */
     @PutMapping("/{fileId}")
+    @RateLimit(capacity = 30, refillRate = 2, requested = 10)
     public ResponseEntity<ApiResponse<FileResponseDto>> putFile(
             @RequestParam("file") MultipartFile file,
             @PathVariable Long fileId,
@@ -85,10 +89,11 @@ public class FileController {
     }
 
     /*
-     * DELETE /api/files/{fileId} 
+     * DELETE /api/files/{fileId}
      * 파일 삭제 (논리 삭제 + 물리 파일 비동기 삭제)
      */
     @DeleteMapping("/{fileId}")
+    @RateLimit(capacity = 20, refillRate = 2, requested = 2)
     public ResponseEntity<ApiResponse<Void>> deleteFile(
             @PathVariable Long fileId,
             @AuthenticationPrincipal String userId) {
@@ -97,38 +102,46 @@ public class FileController {
     }
 
     /*
-     * GET /api/files/download/{fileId} 
+     * GET /api/files/download/{fileId}
      * 파일 다운로드 API (파일 ID 기준)
      */
     @GetMapping("/download/{fileId}")
+    @RateLimit(capacity = 20, refillRate = 2, requested = 2)
     public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId) {
         FileDownloadDto downloadDto = fileService.downloadFile(fileId);
         String encodedFileName = UriUtils.encode(downloadDto.originalName(), StandardCharsets.UTF_8);
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(downloadDto.contentType() != null ? downloadDto.contentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
+                .contentType(MediaType.parseMediaType(downloadDto.contentType() != null ? downloadDto.contentType()
+                        : MediaType.APPLICATION_OCTET_STREAM_VALUE))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
                 .body(downloadDto.resource());
     }
 
     /*
-     * GET /api/files/download 
+     * GET /api/files/download
      * 파일 다운로드 API (storedName 기준)
      */
     @GetMapping("/download")
-    public ResponseEntity<org.springframework.core.io.Resource> downloadFileByName(@RequestParam("storedName") String storedName) {
+    @RateLimit(capacity = 20, refillRate = 2, requested = 2)
+    public ResponseEntity<org.springframework.core.io.Resource> downloadFileByName(
+            @RequestParam("storedName") String storedName) {
         FileDownloadDto downloadDto = fileService.downloadFileByStoredName(storedName);
         String encodedFileName = UriUtils.encode(downloadDto.originalName(), StandardCharsets.UTF_8);
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(downloadDto.contentType() != null ? downloadDto.contentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
+                .contentType(MediaType.parseMediaType(downloadDto.contentType() != null ? downloadDto.contentType()
+                        : MediaType.APPLICATION_OCTET_STREAM_VALUE))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
                 .body(downloadDto.resource());
     }
 
     /*
-     * POST /api/files/delete-batch 
+     * POST /api/files/delete-batch
      * 다중 파일 삭제 API
      */
     @PostMapping("/delete-batch")
+    @RateLimit(capacity = 20, refillRate = 2, requested = 2)
     public ResponseEntity<ApiResponse<Void>> deleteFilesBatch(
             @RequestBody List<Long> fileIds,
             @AuthenticationPrincipal String userId) {

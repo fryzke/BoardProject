@@ -11,6 +11,7 @@ import com.example.forum.dto.UserResponseDto;
 import com.example.forum.repository.CommentRepository;
 import com.example.forum.repository.PostRepository;
 import com.example.forum.repository.UserRepository;
+import com.example.forum.validator.AuthValidator;
 
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
-    private final com.example.forum.validator.AuthValidator authValidator;
+    private final AuthValidator authValidator;
 
     /*
      * 등급 갱신
@@ -34,6 +35,10 @@ public class UserService {
     public void updateGrade(String userId) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+
+        if (user.isDeleted()) {
+            return;
+        }
 
         Long postCount = postRepository.countByAuthorId(user.getId());
         Long commentCount = commentRepository.countByAuthorId(user.getId());
@@ -60,6 +65,10 @@ public class UserService {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
+        if (user.isDeleted()) {
+            throw new IllegalArgumentException("존재하지 않거나 탈퇴한 사용자입니다.");
+        }
+
         Long postCount = postRepository.countByAuthorId(user.getId());
         Long commentCount = commentRepository.countByAuthorId(user.getId());
 
@@ -76,7 +85,12 @@ public class UserService {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        if (dto.getCurrentPassword() == null || !passwordEncoder.matches(dto.getCurrentPassword(), user.getUserPassword())) {
+        if (user.isDeleted()) {
+            throw new IllegalArgumentException("존재하지 않거나 탈퇴한 사용자입니다.");
+        }
+
+        if (dto.getCurrentPassword() == null
+                || !passwordEncoder.matches(dto.getCurrentPassword(), user.getUserPassword())) {
             throw new IllegalArgumentException("기존 비밀번호가 일치하지 않습니다.");
         }
 
@@ -87,5 +101,26 @@ public class UserService {
             encodedPassword = passwordEncoder.encode(dto.getUserPassword());
         }
         user.update(encodedPassword, dto.getUserName());
+    }
+
+    /*
+     * 유저 탈퇴
+     * - id에 해당하는 유저 조회
+     * - 존재하는 유저라면 비밀번호 일치 확인 후 삭제 처리
+     */
+
+    public void deleteUser(String userId, String userPassword) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        if (user.isDeleted()) {
+            throw new IllegalArgumentException("이미 탈퇴한 사용자입니다.");
+        }
+    
+        if(!passwordEncoder.matches(userPassword, user.getUserPassword())){
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        userRepository.delete(user);
     }
 }

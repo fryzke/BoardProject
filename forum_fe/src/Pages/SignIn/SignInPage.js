@@ -1,7 +1,6 @@
 import "./SignInPage.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "../../Components/Toast/ToastContext";
 import { loginUser } from "../../api";
 
 async function handleLogin(id, pwd, valid, navigate, setFail) {
@@ -27,7 +26,6 @@ async function handleLogin(id, pwd, valid, navigate, setFail) {
 
 function SignInPage() {
     const navigate = useNavigate();
-    const toast = useToast();
 
     const [id, setId] = useState("");
     const [pwd, setPwd] = useState("");

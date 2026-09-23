@@ -57,7 +57,7 @@ Object.freeze(PaginationConfig);
 
 export const searchOption = {
     TITLE: "title",
-    COTENT: "content",
+    CONTENT: "content",
     BOTH: "both",
 };
 Object.freeze(searchOption);

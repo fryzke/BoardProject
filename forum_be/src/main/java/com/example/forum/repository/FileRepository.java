@@ -2,6 +2,7 @@ package com.example.forum.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,7 +28,7 @@ public interface FileRepository extends JpaRepository<File, Long> {
 
     int countByAuthorAndPostIsNull(User author);
 
-    java.util.Optional<File> findByStoredName(String storedName);
+    Optional<File> findByStoredName(String storedName);
 
     @Query("SELECT COALESCE(SUM(f.fileSize)) AS totalSize FROM File f WHERE f.post.id = :postId")
     Long sumTotalSizeByPostId(@Param("postId") Long postId);

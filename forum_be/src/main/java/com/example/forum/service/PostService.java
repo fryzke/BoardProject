@@ -103,7 +103,8 @@ public class PostService {
 
         Sort.Order pinOrder = Sort.Order.desc("isPinned");
         Sort sortOrder;
-        if (sort != null && (sort.equalsIgnoreCase("popular") || sort.equalsIgnoreCase("views") || sort.equalsIgnoreCase("viewCount"))) {
+        if (sort != null && (sort.equalsIgnoreCase("popular") || sort.equalsIgnoreCase("views")
+                || sort.equalsIgnoreCase("viewCount"))) {
             sortOrder = Sort.by(pinOrder, Sort.Order.desc("viewCount"), Sort.Order.desc("createdAt"));
         } else {
             sortOrder = Sort.by(pinOrder, Sort.Order.desc("createdAt"));
@@ -129,11 +130,19 @@ public class PostService {
         return postRepository.searchPosts(targetCategory, searchKeywords, option, pageable);
     }
 
-    private String[] tokenize(String keyword){
-        if(keyword == null || keyword.isBlank()){
+    private String[] tokenize(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
             return new String[0];
         }
-        return keyword.trim().replaceAll("\\s+"," ").split(" ");
+        // 1. 연속된 공백을 단일 공백으로 통일
+        String rawKeyword = keyword.trim().replaceAll("\\s+", " ");
+        // 2. 공백 제거
+        String noSpaceKeyword = rawKeyword.replaceAll("\\s+", "");
+        // 공백이 포함된 검색어인 경우 둘 다 포함, 아니면 1개만 전달
+        if (!rawKeyword.equals(noSpaceKeyword)) {
+            return new String[] { rawKeyword, noSpaceKeyword };
+        }
+        return new String[] { rawKeyword };
     }
 
     // 게시글 삭제 (물리 파일 삭제 이벤트 발행)

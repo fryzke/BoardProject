@@ -1,5 +1,6 @@
 package com.example.forum.controller;
 
+import com.example.forum.annotation.RateLimit;
 import com.example.forum.domain.Grade;
 import com.example.forum.domain.Role;
 import com.example.forum.domain.User;
@@ -41,6 +42,7 @@ public class AuthController {
          * POST /api/auth/signup
          */
         @PostMapping("/signup")
+        @RateLimit(capacity = 5, refillRate = 1, requested = 1)
         public ResponseEntity<ApiResponse<Void>> signUp(@RequestBody @Valid SignUpDto dto) {
                 authService.signUp(dto);
                 return ResponseEntity.ok(ApiResponse.success("회원가입이 완료되었습니다."));
@@ -51,6 +53,7 @@ public class AuthController {
          * POST /api/auth/login
          */
         @PostMapping("/login")
+        @RateLimit(capacity = 5, refillRate = 1, requested = 1)
         public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid LoginDto dto) {
                 JwtTokenDto token = authService.login(dto);
                 ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", token.getRefreshToken())
@@ -96,6 +99,7 @@ public class AuthController {
          * POST /api/auth/logout
          */
         @PostMapping("/logout")
+        @RateLimit(capacity = 10, refillRate = 2, requested = 1)
         public ResponseEntity<ApiResponse<Void>> logout(
                         @CookieValue(name = "accessToken", required = false) String accessToken,
                         @CookieValue(name = "refreshToken", required = false) String refreshToken) {
@@ -128,6 +132,7 @@ public class AuthController {
          * POST /api/auth/reissue
          */
         @PostMapping("/reissue")
+        @RateLimit(capacity = 10, refillRate = 2, requested = 1)
         public ResponseEntity<ReissueResponseDto> reissue(
                         @CookieValue(name = "refreshToken", required = false) String refreshToken) {
                 JwtTokenDto token = authService.reissue(refreshToken);

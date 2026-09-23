@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, FileText, MessageSquare, Shield, Award, Calendar, LogOut, ArrowLeft, Save } from 'lucide-react';
-import { getUserInfo, updateUserInfo, logoutUser } from '../../api';
+import { User, FileText, MessageSquare, Shield, Award, Calendar, LogOut, ArrowLeft, Save, UserRoundX, AlertTriangle } from 'lucide-react';
+import { getUserInfo, updateUserInfo, logoutUser, deleteUser } from '../../api';
 import { formatDate } from '../../utils';
 import { AuthValidation, Role } from '../../enum';
 import { useToast } from '../../Components/Toast/ToastContext';
 import { useModal } from '../../Components/Modal/ModalContext';
+import Modal from '../../Components/Modal/Modal';
 import './MyPage.css';
 
 export default function MyPage() {
@@ -21,6 +22,11 @@ export default function MyPage() {
     const [password, setPassword] = useState('');
     const [passwordConfirm, setPasswordConfirm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // 회원 탈퇴 관련 상태
+    const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+    const [withdrawPassword, setWithdrawPassword] = useState('');
+    const [isWithdrawing, setIsWithdrawing] = useState(false);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -99,6 +105,50 @@ export default function MyPage() {
             toast.error(msg);
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleOpenWithdrawModal = () => {
+        setWithdrawPassword('');
+        setShowWithdrawModal(true);
+    };
+
+    const handleCloseWithdrawModal = () => {
+        if (isWithdrawing) return;
+        setShowWithdrawModal(false);
+        setWithdrawPassword('');
+    };
+
+    const handleWithdraw = async (e) => {
+        if (e) e.preventDefault();
+
+        if (!withdrawPassword.trim()) {
+            toast.warning('탈퇴를 위해 비밀번호를 입력해주세요.');
+            return;
+        }
+
+        setIsWithdrawing(true);
+        try {
+            const res = await deleteUser(withdrawPassword.trim());
+            if (res.success) {
+                toast.success('성공적으로 탈퇴되었습니다. 그동안 이용해주셔서 감사합니다.');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('userGrade');
+                localStorage.removeItem('userRole');
+                try {
+                    await logoutUser();
+                } catch (ignore) {}
+                setShowWithdrawModal(false);
+                navigate('/');
+            } else {
+                toast.error(res.message || '탈퇴 처리에 실패했습니다.');
+            }
+        } catch (error) {
+            const msg = error.response?.data?.message || '비밀번호가 일치하지 않거나 탈퇴 처리에 실패했습니다.';
+            toast.error(msg);
+        } finally {
+            setIsWithdrawing(false);
         }
     };
 
@@ -194,7 +244,7 @@ export default function MyPage() {
             </div>
 
             {/* 회원 정보 수정 폼 */}
-            <div className="EditSectionCard">
+            <div className="SectionCard">
                 <h2 className="SectionTitle">회원 정보 수정</h2>
                 <form className="EditForm" onSubmit={handleUpdate}>
                     <div className="FormGroup">
@@ -276,6 +326,32 @@ export default function MyPage() {
                 </form>
             </div>
 
+            {/* 회원 탈퇴 영역 */}
+            <div className="SectionCard SectionCard--danger">
+                <h2 className="SectionTitle SectionTitle--danger">회원 탈퇴</h2>
+                <div className="WithdrawContent">
+                    <div className="WithdrawNotice">
+                        <AlertTriangle size={18} className="WithdrawNoticeIcon" />
+                        <div className="WithdrawNoticeText">
+                            <p className="WithdrawNoticeTitle">계정 삭제 전 유의사항</p>
+                            <p className="WithdrawNoticeDesc">
+                                탈퇴 시 개인 정보 및 서비스 이용 기록이 삭제되며, 삭제된 데이터는 복구할 수 없습니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="WithdrawActions">
+                        <button
+                            type="button"
+                            className="WithdrawButton"
+                            onClick={handleOpenWithdrawModal}
+                        >
+                            <UserRoundX size={16} />
+                            <span>회원 탈퇴</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             {/* 하단 로그아웃 영역 */}
             <div className="MyPageFooter">
                 <button type="button" className="LogoutButtonSecondary" onClick={handleLogout}>
@@ -283,6 +359,61 @@ export default function MyPage() {
                     <span>로그아웃</span>
                 </button>
             </div>
+
+            {/* 회원 탈퇴 확인 모달 */}
+            <Modal
+                isOpen={showWithdrawModal}
+                onClose={handleCloseWithdrawModal}
+                size="md"
+            >
+                <Modal.Header
+                    title="회원 탈퇴 확인"
+                    isDestructive={true}
+                    onClose={handleCloseWithdrawModal}
+                />
+                <form onSubmit={handleWithdraw}>
+                    <Modal.Body>
+                        <div className="WithdrawModalBody">
+                            <p className="WithdrawModalWarning">
+                                정말로 탈퇴하시겠습니까?<br />
+                                본인 확인을 위해 <strong>현재 비밀번호</strong>를 입력해주세요.
+                            </p>
+                            <div className="FormGroup" style={{ marginTop: '16px' }}>
+                                <label className="FormLabel" htmlFor="withdraw-password">
+                                    비밀번호 <span style={{ color: '#ef4444' }}>*</span>
+                                </label>
+                                <input
+                                    id="withdraw-password"
+                                    type="password"
+                                    className="FormInput"
+                                    value={withdrawPassword}
+                                    onChange={(e) => setWithdrawPassword(e.target.value)}
+                                    placeholder="현재 비밀번호 입력"
+                                    autoFocus
+                                    autoComplete="current-password"
+                                />
+                            </div>
+                        </div>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <button
+                            type="button"
+                            className="ModalBtn ModalBtn--cancel"
+                            onClick={handleCloseWithdrawModal}
+                            disabled={isWithdrawing}
+                        >
+                            취소
+                        </button>
+                        <button
+                            type="submit"
+                            className="ModalBtn ModalBtn--danger"
+                            disabled={isWithdrawing || !withdrawPassword.trim()}
+                        >
+                            {isWithdrawing ? '탈퇴 처리 중...' : '탈퇴하기'}
+                        </button>
+                    </Modal.Footer>
+                </form>
+            </Modal>
         </div>
     );
 }

@@ -72,3 +72,9 @@
     background-color: #141c24;
     transform: translateY(1px);
 }
+
+.SearchButton:disabled {
+    background-color: #94a3b8;
+    border:none;
+    cursor: not-allowed;
+}

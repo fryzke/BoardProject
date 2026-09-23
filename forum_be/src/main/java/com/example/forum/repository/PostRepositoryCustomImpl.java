@@ -37,17 +37,18 @@ public class PostRepositoryCustomImpl implements PostRepositoryCustom {
         if (keywords != null && keywords.length > 0 && option != null) {
             BooleanBuilder keywordBuilder = new BooleanBuilder();
             for (String keyword : keywords) {
-                if (keyword == null || keyword.isBlank()) continue;
+                if (keyword == null || keyword.isBlank())
+                    continue;
                 switch (option.toLowerCase()) {
-                    case "title" -> keywordBuilder.and(post.title.containsIgnoreCase(keyword));
-                    case "content" -> keywordBuilder.and(post.plainContent.containsIgnoreCase(keyword));
-                    default -> keywordBuilder.and(post.title.containsIgnoreCase(keyword)
-                                             .or(post.plainContent.containsIgnoreCase(keyword)));
+                    case "title" -> keywordBuilder.or(post.title.containsIgnoreCase(keyword));
+                    case "content" -> keywordBuilder.or(post.plainContent.containsIgnoreCase(keyword));
+                    default -> keywordBuilder.or(post.title.containsIgnoreCase(keyword))
+                            .or(post.plainContent.containsIgnoreCase(keyword));
                 }
             }
             builder.and(keywordBuilder);
         }
-
+        
         List<Post> fetch = queryFactory
                 .selectFrom(post)
                 .leftJoin(post.author).fetchJoin()
@@ -65,21 +66,6 @@ public class PostRepositoryCustomImpl implements PostRepositoryCustom {
         return PageableExecutionUtils.getPage(fetch, pageable, count::fetchOne);
     }
 
-    @Override
-    public Page<Post> findByTitleContainingIgnoreCase(String[] keywords, Pageable pageable) {
-        return searchPosts(null, keywords, "title", pageable);
-    }
-
-    @Override
-    public Page<Post> findByContentContainingIgnoreCase(String[] keywords, Pageable pageable) {
-        return searchPosts(null, keywords, "content", pageable);
-    }
-
-    @Override
-    public Page<Post> findByTitleOrContentContainingIgnoreCase(String[] keywords, Pageable pageable) {
-        return searchPosts(null, keywords, "both", pageable);
-    }
-
     private OrderSpecifier<?>[] getOrderSpecifiers(Pageable pageable, QPost post) {
         List<OrderSpecifier<?>> orders = new ArrayList<>();
         if (pageable.getSort() != null) {
@@ -89,7 +75,8 @@ public class PostRepositoryCustomImpl implements PostRepositoryCustom {
                     case "isPinned" -> orders.add(new OrderSpecifier<>(direction, post.isPinned));
                     case "createdAt" -> orders.add(new OrderSpecifier<>(direction, post.createdAt));
                     case "viewCount" -> orders.add(new OrderSpecifier<>(direction, post.viewCount));
-                    default -> {}
+                    default -> {
+                    }
                 }
             }
         }

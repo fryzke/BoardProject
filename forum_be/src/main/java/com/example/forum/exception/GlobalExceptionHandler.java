@@ -33,4 +33,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("서버 내부 오류가 발생했습니다."));
     }
+
+    @ExceptionHandler(RateLimitExceedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRateLimitExceedException(RateLimitExceedException e){
+        String errorMessage = e.getMessage();
+
+        log.warn("RateLimit Exceed Exception: {}", errorMessage);
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(ApiResponse.error(errorMessage));
+    }
 }

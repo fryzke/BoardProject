@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.forum.annotation.RateLimit;
 import com.example.forum.dto.CommentRequestDto;
 import com.example.forum.dto.CommentResponseDto;
 import com.example.forum.dto.common.ApiResponse;
@@ -36,6 +37,7 @@ public class CommentController {
      * 댓글 작성
      */
     @PostMapping
+    @RateLimit(capacity = 15, refillRate = 2, requested = 3)
     public ResponseEntity<ApiResponse<CommentResponseDto>> createComment(
             @AuthenticationPrincipal String userId,
             @PathVariable Long postId,
@@ -50,6 +52,7 @@ public class CommentController {
      * 댓글 불러오기
      */
     @GetMapping
+    @RateLimit(capacity = 60, refillRate = 10, requested = 1)
     public ResponseEntity<ApiResponse<List<CommentResponseDto>>> getComments(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int limit,
@@ -63,6 +66,7 @@ public class CommentController {
      * 댓글 수정하기
      */
     @PutMapping("/{commentId}")
+    @RateLimit(capacity = 15, refillRate = 2, requested = 2)
     public ResponseEntity<ApiResponse<CommentResponseDto>> putComments(
             @PathVariable Long postId,
             @PathVariable Long commentId,
@@ -77,6 +81,7 @@ public class CommentController {
      * 댓글 삭제하기
      */
     @DeleteMapping("/{commentId}")
+    @RateLimit(capacity = 15, refillRate = 2, requested = 2)
     public ResponseEntity<ApiResponse<Void>> deleteComment(
             @PathVariable Long postId,
             @PathVariable Long commentId,
