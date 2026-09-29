@@ -44,7 +44,7 @@
 
 ### 1. 회원 및 보안 인증 시스템
 - **회원가입 / 로그인**:
-  - 아이디(4~16자), 비밀번호(영문/숫자/특수문자 포함 8자 이상), 닉네임(2~20자) 엄격한 Bean Validation 및 정규식 검증
+  - 아이디(4-16자), 비밀번호(영문/숫자/특수문자 포함 8자 이상), 닉네임(2-20자) 엄격한 Bean Validation 및 정규식 검증
   - BCrypt 암호화 및 HttpOnly/Secure 쿠키 기반 JWT Access/Refresh 토큰 발급
 - **토큰 무중단 재발급 & 로그아웃**:
   - Axios 응셉터에서 401 감지 시 Refresh Token으로 자동 재발급(Silent Refresh) 후 대기 큐 요청 재시도
