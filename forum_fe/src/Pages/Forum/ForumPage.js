@@ -56,10 +56,10 @@ function ForumPage() {
                     null,
                     { signal: controller.signal }
                 );
-                setPosts(result.data);
-                setTotalPages(result.pagination.totalPages);
-                setCurrentPage(result.pagination.currentPage);
-                setTotalPosts(result.pagination.totalPosts);
+                setPosts(result.data || []);
+                setTotalPages(result.pagination?.totalPages || 1);
+                setCurrentPage(result.pagination?.currentPage || 1);
+                setTotalPosts(result.pagination?.totalPosts || 0);
             } catch (error) {
                 if (!axios.isCancel(error)) {
                     console.error("Failed to load posts", error);
@@ -150,10 +150,13 @@ function ForumPage() {
                         className="ForumCategory"
                         id="category"
                         value={currentCategory}
-                        onChange={(e) => setCurrentCategory(e.target.value)}>
+                        onChange={(e) => {
+                            setCurrentCategory(e.target.value);
+                            setCurrentPage(1);
+                        }}>
                         {
                             Object.values(Category).map((category) => (
-                                <option value={category}>{category}</option>
+                                <option key={category} value={category}>{category}</option>
                             ))
                         }
                     </select>

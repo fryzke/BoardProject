@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -220,7 +221,7 @@ public class FileService {
     public FileDownloadDto downloadFile(Long id) {
         File file = fileRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 파일입니다."));
-        org.springframework.core.io.Resource resource = fileStorageService.loadFileAsResource(file.getStoredName());
+        Resource resource = fileStorageService.loadFileAsResource(file.getStoredName());
         return new FileDownloadDto(resource, file.getOriginalName(), file.getContentType());
     }
 
@@ -228,7 +229,7 @@ public class FileService {
     @Transactional(readOnly = true)
     public FileDownloadDto downloadFileByStoredName(String storedName) {
         File file = fileRepository.findByStoredName(storedName).orElse(null);
-        org.springframework.core.io.Resource resource = fileStorageService.loadFileAsResource(storedName);
+        Resource resource = fileStorageService.loadFileAsResource(storedName);
         String originalName = file != null ? file.getOriginalName() : storedName;
         String contentType = file != null ? file.getContentType() : "application/octet-stream";
         return new FileDownloadDto(resource, originalName, contentType);

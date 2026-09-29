@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { User, FileText, MessageSquare, Shield, Award, Calendar, LogOut, ArrowLeft, Save, UserRoundX, AlertTriangle } from 'lucide-react';
 import { getUserInfo, updateUserInfo, logoutUser, deleteUser } from '../../api';
 import { formatDate } from '../../utils';
@@ -29,22 +30,32 @@ export default function MyPage() {
     const [isWithdrawing, setIsWithdrawing] = useState(false);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         const fetchUserData = async () => {
             try {
-                const res = await getUserInfo();
+                const res = await getUserInfo({ signal: controller.signal });
                 if (res.data) {
                     setUserInfo(res.data);
                     setUserName(res.data.userName || '');
                 }
             } catch (error) {
-                toast.error('회원 정보를 불러오지 못했습니다.');
-                navigate('/');
+                if (!axios.isCancel(error)) {
+                    toast.error('회원 정보를 불러오지 못했습니다.');
+                    navigate('/');
+                }
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchUserData();
+
+        return () => {
+            controller.abort();
+        };
     }, [navigate, toast]);
 
     // 유효성 검사

@@ -8,7 +8,9 @@ function CommentForm({ postId, comment, parentId, onSuccess, onCancel }) {
     const [content, setContent] = useState(comment?.content || "");
     const isEditMode = !!comment;
     const [beforeEdit, setBeforeEdit] = useState(comment?.content || "");
-    const isValid = (content !== beforeEdit) && content.trim() > 0;
+    const isValid = isEditMode
+        ? (content !== beforeEdit && content.trim().length > 0)
+        : (content.trim().length > 0);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

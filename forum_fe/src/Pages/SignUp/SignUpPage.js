@@ -12,7 +12,7 @@ function SignUpPage() {
     const [id, setId] = useState("");
     const [pwd, setPwd] = useState("");
 
-    const validNickname = nickname.trim().length > 0;
+    const validNickname = nickname.trim().length >= AuthValidation.MIN_NAME_LENGTH && nickname.trim().length <= AuthValidation.MAX_NAME_LENGTH;
     const validId = id.trim().length >= AuthValidation.MIN_ID_LENGTH && id.trim().length <= AuthValidation.MAX_ID_LENGTH;
     const validPwd = AuthValidation.PASSWORD_REGEX.test(pwd);
     const validation = validId && validNickname && validPwd;
@@ -69,7 +69,7 @@ function SignUpPage() {
                         />
                         <div className="Validation">
                             {
-                                (nickname === "" || validNickname) ? <p></p> : <p className="Message">닉네임을 입력해주세요</p>
+                                (nickname === "" || validNickname) ? <p></p> : <p className="Message">닉네임은 2자 이상 20자 이하로 입력해주세요.</p>
                             }
                         </div>
                     </div>

@@ -3,6 +3,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
 import DOMPurify from 'dompurify';
+import axios from 'axios';
 import { useRef, useCallback, useEffect } from 'react';
 import {
     Bold, Italic, Strikethrough, Heading1, Heading2, Heading3,
@@ -146,6 +147,14 @@ export default function TiptapEditor({
     const toast = useToast();
     const fileInputRef = useRef(null);
     const imageInputRef = useRef(null);
+    const uploadControllersRef = useRef(new Set());
+
+    useEffect(() => {
+        const controllers = uploadControllersRef.current;
+        return () => {
+            controllers.forEach(c => c.abort());
+        };
+    }, []);
 
     const editor = useEditor({
         extensions: [
@@ -227,8 +236,11 @@ export default function TiptapEditor({
             return;
         }
 
+        const controller = new AbortController();
+        uploadControllersRef.current.add(controller);
+
         try {
-            const result = await uploadFile(file, postId);
+            const result = await uploadFile(file, postId, { signal: controller.signal });
             if (result.success && result.url) {
                 editor?.chain().focus().setImage({ src: result.url }).run();
                 if (setFileIdList && result.data?.id) {
@@ -239,8 +251,11 @@ export default function TiptapEditor({
                 toast.error(result.message || '이미지 업로드에 실패했습니다.');
             }
         } catch (error) {
-            toast.error('이미지 업로드 중 오류가 발생했습니다.');
+            if (!axios.isCancel(error)) {
+                toast.error('이미지 업로드 중 오류가 발생했습니다.');
+            }
         } finally {
+            uploadControllersRef.current.delete(controller);
             event.target.value = '';
         }
     }, [editor, postId, setFileIdList, toast, validateFile]);
@@ -255,8 +270,11 @@ export default function TiptapEditor({
             return;
         }
 
+        const controller = new AbortController();
+        uploadControllersRef.current.add(controller);
+
         try {
-            const result = await uploadFile(file, postId);
+            const result = await uploadFile(file, postId, { signal: controller.signal });
             if (result.success && result.data) {
                 const uploadedFile = {
                     id: result.data.id,
@@ -277,8 +295,11 @@ export default function TiptapEditor({
                 toast.error(result.message || '파일 업로드에 실패했습니다.');
             }
         } catch (error) {
-            toast.error('파일 업로드 중 오류가 발생했습니다.');
+            if (!axios.isCancel(error)) {
+                toast.error('파일 업로드 중 오류가 발생했습니다.');
+            }
         } finally {
+            uploadControllersRef.current.delete(controller);
             event.target.value = '';
         }
     }, [postId, setAttachedFiles, setFileIdList, toast, validateFile]);
@@ -309,10 +330,7 @@ export default function TiptapEditor({
                 type="file"
                 ref={fileInputRef}
                 style={{ display: 'none' }}
-                accept="application/pdf, application/msword, text/plain, 
-                application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 
-                application/vnd.openxmlformats-officedocument.presentationml.presentation, 
-                application/zip"
+                accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.xlsx,.pptx,.zip,application/pdf,application/msword,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip"
                 onChange={handleFileChange}
             />
             <EditorContent editor={editor} className="tiptap-content" />

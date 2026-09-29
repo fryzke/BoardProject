@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import axios from 'axios';
 import { getComments } from "../../api";
 import { PaginationConfig } from "../../enum";
 import CommentForm from "./CommentForm";
@@ -23,8 +24,10 @@ function CommentSection({ postId, isLoggedIn, currentUserId }) {
                 setTotalComments(result.pagination.totalComments);
             }
         } catch (error) {
-            console.error("댓글을 불러올 수 없습니다:", error);
-            setComments([]);
+            if (!axios.isCancel(error)) {
+                console.error("댓글을 불러올 수 없습니다:", error);
+                setComments([]);
+            }
         }
     }, [postId]);
 

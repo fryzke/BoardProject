@@ -78,11 +78,14 @@ api.interceptors.response.use(
 
 // ===== Auth APIs (실제 백엔드 연동) =====
 
-export const registerUser = async (userId, userPassword, userName) => {
+export const registerUser = async (userId, userPassword, userName, options = {}) => {
     try {
-        const response = await api.post('/auth/signup', { userId, userPassword, userName });
+        const response = await api.post('/auth/signup', { userId, userPassword, userName }, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         if (error.response && error.response.data) {
             return error.response.data;
         }
@@ -91,11 +94,14 @@ export const registerUser = async (userId, userPassword, userName) => {
     }
 };
 
-export const loginUser = async (userId, userPassword) => {
+export const loginUser = async (userId, userPassword, options = {}) => {
     try {
-        const response = await api.post('/auth/login', { userId, userPassword });
+        const response = await api.post('/auth/login', { userId, userPassword }, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         if (error.response && error.response.data) {
             return error.response.data;
         }
@@ -104,11 +110,14 @@ export const loginUser = async (userId, userPassword) => {
     }
 };
 
-export const logoutUser = async () => {
+export const logoutUser = async (options = {}) => {
     try {
-        const response = await api.post('/auth/logout');
+        const response = await api.post('/auth/logout', {}, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         if (error.response && error.response.data) {
             return error.response.data;
         }
@@ -117,11 +126,14 @@ export const logoutUser = async () => {
     }
 };
 
-export const reissueToken = async () => {
+export const reissueToken = async (options = {}) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/auth/reissue`, {}, { withCredentials: true });
+        const response = await axios.post(`${API_BASE_URL}/auth/reissue`, {}, { withCredentials: true, ...options });
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         if (error.response?.data) {
             return error.response.data;
         }
@@ -131,36 +143,46 @@ export const reissueToken = async () => {
 
 // ===== User APIs (마이페이지 연동) =====
 
-export const getUserInfo = async () => {
+export const getUserInfo = async (options = {}) => {
     try {
-        const response = await api.get('/users/me');
+        const response = await api.get('/users/me', options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Get user info error:", error);
         throw error;
     }
 };
 
-export const updateUserInfo = async (userData) => {
+export const updateUserInfo = async (userData, options = {}) => {
     try {
-        const response = await api.put('/users/me', userData);
+        const response = await api.put('/users/me', userData, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Update user info error:", error);
         throw error;
     }
 };
 
-export const deleteUser = async (userPassword) => {
+export const deleteUser = async (userPassword, options = {}) => {
     try {
         const response = await api.delete('/users/withdraw', {
             data: userPassword,
             headers: {
                 'Content-Type': 'text/plain',
             },
+            ...options,
         });
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Delete user account error:", error);
         throw error;
     }
@@ -171,13 +193,12 @@ export const deleteUser = async (userPassword) => {
 export const fetchPosts = async (page = 1, limit = 20, sort = "latest", category = "all", keyword = null, option = null, options = {}) => {
     try {
         const response = (keyword == null || option == null) 
-        ? await api.get(`/posts?page=${page}&limit=${limit}&sort=${sort}&category=${category}`, options)
-        : await api.get(`/posts?page=${page}&limit=${limit}&sort=${sort}&category=${category}&keyword=${keyword}&option=${option}`, options);
+            ? await api.get(`/posts?page=${page}&limit=${limit}&sort=${sort}&category=${category}`, options)
+            : await api.get(`/posts?page=${page}&limit=${limit}&sort=${sort}&category=${category}&keyword=${encodeURIComponent(keyword)}&option=${option}`, options);
         return {
             data: response?.data.data ?? [],
             pagination: response?.data.pagination ?? null
         };
-
     } catch (error) {
         if (axios.isCancel(error)) {
             return { data: [], pagination: null };
@@ -203,31 +224,40 @@ export const getPost = async (id, options = {}) => {
     }
 };
 
-export const createPost = async (title, category, content, isPinned = false, fileIdList = []) => {
+export const createPost = async (title, category, content, isPinned = false, fileIdList = [], options = {}) => {
     try {
-        const response = await api.post('/posts', { title, category, content, isPinned, fileIdList });
+        const response = await api.post('/posts', { title, category, content, isPinned, fileIdList }, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Create post error:", error);
         throw error;
     }
 };
 
-export const updatePost = async (id, title, category, content, isPinned = false, fileIdList = []) => {
+export const updatePost = async (id, title, category, content, isPinned = false, fileIdList = [], options = {}) => {
     try {
-        const response = await api.put(`/posts/${id}`, { title, category, content, isPinned, fileIdList });
+        const response = await api.put(`/posts/${id}`, { title, category, content, isPinned, fileIdList }, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Update post error:", error);
         throw error;
     }
 };
 
-export const deletePost = async (id) => {
+export const deletePost = async (id, options = {}) => {
     try {
-        const response = await api.delete(`/posts/${id}`);
+        const response = await api.delete(`/posts/${id}`, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Delete post error:", error);
         throw error;
     }
@@ -235,7 +265,7 @@ export const deletePost = async (id) => {
 
 // ===== File/Image APIs (파일 및 이미지 통합 처리) =====
 
-export const uploadFile = async (file, postId) => {
+export const uploadFile = async (file, postId, options = {}) => {
     try {
         const formData = new FormData();
         formData.append('file', file);
@@ -246,15 +276,19 @@ export const uploadFile = async (file, postId) => {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
+            ...options,
         });
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Upload file error:", error);
         throw error;
     }
 };
 
-export const uploadFiles = async (files, postId) => {
+export const uploadFiles = async (files, postId, options = {}) => {
     try {
         const formData = new FormData();
         files.forEach((file) => {
@@ -267,25 +301,32 @@ export const uploadFiles = async (files, postId) => {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
+            ...options,
         });
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Upload files error:", error);
         throw error;
     }
 };
 
-export const getFiles = async (postId) => {
+export const getFiles = async (postId, options = {}) => {
     try {
-        const response = await api.get(`/files/${postId}`);
+        const response = await api.get(`/files/${postId}`, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Get files error:", error);
         throw error;
     }
 };
 
-export const updateFile = async (file, fileId) => {
+export const updateFile = async (file, fileId, options = {}) => {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -294,29 +335,39 @@ export const updateFile = async (file, fileId) => {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
+            ...options,
         });
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Update file error:", error);
         throw error;
     }
 };
 
-export const deleteFile = async (fileId) => {
+export const deleteFile = async (fileId, options = {}) => {
     try {
-        const response = await api.delete(`/files/${fileId}`);
+        const response = await api.delete(`/files/${fileId}`, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Delete file error:", error);
         throw error;
     }
 };
 
-export const deleteBatchFiles = async (fileIds) => {
+export const deleteBatchFiles = async (fileIds, options = {}) => {
     try {
-        const response = await api.post('/files/delete-batch', fileIds);
+        const response = await api.post('/files/delete-batch', fileIds, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Delete batch files error:", error);
         throw error;
     }
@@ -347,31 +398,40 @@ export const getComments = async (postId, page = 1, limit = 10, options = {}) =>
     }
 };
 
-export const createComment = async (postId, content, parentId) => {
+export const createComment = async (postId, content, parentId, options = {}) => {
     try {
-        const response = await api.post(`/comments/${postId}`, { content, parentId });
+        const response = await api.post(`/comments/${postId}`, { content, parentId }, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Create comment error:", error);
         throw error;
     }
 };
 
-export const updateComment = async (postId, commentId, content, parentId) => {
+export const updateComment = async (postId, commentId, content, parentId, options = {}) => {
     try {
-        const response = await api.put(`/comments/${postId}/${commentId}`, { content, parentId });
+        const response = await api.put(`/comments/${postId}/${commentId}`, { content, parentId }, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Update comment error:", error);
         throw error;
     }
 };
 
-export const deleteComment = async (postId, commentId) => {
+export const deleteComment = async (postId, commentId, options = {}) => {
     try {
-        const response = await api.delete(`/comments/${postId}/${commentId}`);
+        const response = await api.delete(`/comments/${postId}/${commentId}`, options);
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) {
+            throw error;
+        }
         console.error("Delete comment error:", error);
         throw error;
     }

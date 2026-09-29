@@ -2,6 +2,7 @@ package com.example.forum.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonCreator.Mode;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,16 +17,20 @@ public enum Category {
     REVIEW(5, "후기");
 
     private final int id;
+    @JsonValue
     private final String name;
 
-   @JsonCreator(mode = Mode.DELEGATING)
-   public static Category deserialize(String name) {
+    @JsonCreator(mode = Mode.DELEGATING)
+    public static Category deserialize(String value) {
+        if (value == null) {
+            return null;
+        }
         for (Category category : Category.values()) {
-            if(category.getName().equals(name)) {
+            if (category.getName().equals(value) || category.name().equalsIgnoreCase(value)) {
                 return category;
             }
         }
 
         throw new IllegalArgumentException("해당 카테고리가 존재하지 않습니다.");
-   }
+    }
 }

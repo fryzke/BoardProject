@@ -124,7 +124,7 @@ public class FileController {
      */
     @GetMapping("/download")
     @RateLimit(capacity = 20, refillRate = 2, requested = 2)
-    public ResponseEntity<org.springframework.core.io.Resource> downloadFileByName(
+    public ResponseEntity<Resource> downloadFileByName(
             @RequestParam("storedName") String storedName) {
         FileDownloadDto downloadDto = fileService.downloadFileByStoredName(storedName);
         String encodedFileName = UriUtils.encode(downloadDto.originalName(), StandardCharsets.UTF_8);

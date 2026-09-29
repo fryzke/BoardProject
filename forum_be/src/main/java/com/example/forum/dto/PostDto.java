@@ -8,10 +8,12 @@ import com.example.forum.validator.annotation.ValidPostTitle;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor 
 public class PostDto {
 
     @NotBlank(message = "제목을 입력해주세요.")

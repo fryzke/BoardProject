@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import axios from 'axios';
 import { getUserInfo } from './api';
 
 export default function ProtectedRoute({ children }) {
@@ -7,6 +8,8 @@ export default function ProtectedRoute({ children }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         const checkAuth = async () => {
             const userId = localStorage.getItem('userId');
             if (!userId) {
@@ -16,7 +19,7 @@ export default function ProtectedRoute({ children }) {
             }
 
             try {
-                const res = await getUserInfo();
+                const res = await getUserInfo({ signal: controller.signal });
                 if (res?.success) {
                     setIsAuthenticated(true);
                 } else {
@@ -27,17 +30,25 @@ export default function ProtectedRoute({ children }) {
                     setIsAuthenticated(false);
                 }
             } catch (e) {
-                localStorage.removeItem('userId');
-                localStorage.removeItem('userName');
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userGrade');
-                setIsAuthenticated(false);
+                if (!axios.isCancel(e)) {
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('userName');
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('userGrade');
+                    setIsAuthenticated(false);
+                }
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                }
             }
         };
 
         checkAuth();
+
+        return () => {
+            controller.abort();
+        };
     }, []);
 
     if (loading) {
